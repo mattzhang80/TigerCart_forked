@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delivery Details - TigerCart</title>
+</head>
+<body>
+    <h1>Delivery to {{ delivery.location }}</h1>
+    <ul>
+        {% for item in delivery.delivery_items %}
+        <li>{{ item.name }} - ${{ item.price }} x {{ item.quantity }}</li>
+        {% endfor %}
+    </ul>
+    <p>Total: ${{ delivery.total }}</p>
+    <p>Earnings: ${{ delivery.earnings }}</p>
+    <button onclick="acceptDelivery({{ delivery.id }})">Accept</button>
+    <button onclick="declineDelivery({{ delivery.id }})">Decline</button>
+</body>
+<script>
+function acceptDelivery(deliveryId) {
+    alert('Delivery accepted');
+    window.location.href = '/deliver';
+}
+
+function declineDelivery(deliveryId) {
+    alert('Delivery declined');
+}
+</script>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Confirmation - TigerCart</title>
+</head>
+<body>
+    <h1>Confirm Your Order</h1>
+    <p>Are you sure that you would like to place this order?</p>
+    <button onclick="placeOrder()">Yes</button>
+    <button onclick="window.location.href='{{ url_for("cart_view") }}'">No</button>
+</body>
+<script>
+function placeOrder() {
+    fetch('/place_order', { method: 'POST' })
+        .then(() => {
+            alert('Order placed successfully!');
+            window.location.href = '/';
+        });
+}
+</script>
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ category.capitalize() }} - TigerCart</title>
+</head>
+<body>
+    <h1>{{ category.capitalize() }}</h1>
+    <ul>
+        {% for item in items %}
+        <li>{{ item.name }} - ${{ item.price }}
+            <button class="add-to-cart" data-item-id="{{ item.id }}">Add to Cart</button>
+        </li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('cart_view') }}">View Cart</a>
+</body>
+</html>

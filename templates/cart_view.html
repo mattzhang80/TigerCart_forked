@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Cart - TigerCart</title>
+</head>
+<body>
+    <h1>Your Cart</h1>
+    <ul>
+        {% for item_id, details in cart.items() %}
+        <li>{{ items[item_id].name }} - ${{ items[item_id].price }}
+            <button onclick="updateQuantity('{{ item_id }}', 'decrease')">-</button>
+            {{ details.quantity }}
+            <button onclick="updateQuantity('{{ item_id }}', 'increase')">+</button>
+        </li>
+        {% endfor %}
+    </ul>
+    <p>Subtotal: ${{ subtotal }}</p>
+    <p>Delivery Fee (10%): ${{ delivery_fee }}</p>
+    <p>Total: ${{ total }}</p>
+    <button onclick="window.location.href='{{ url_for("order_confirmation") }}'">Place Order</button>
+</body>
+</html>
+
