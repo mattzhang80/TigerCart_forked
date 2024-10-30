@@ -4,7 +4,7 @@
 
 ## Made by
 
-- Connor: [website](https://conjfrnk.com) & [GitHub](https://github.com/conjfrnk)
+- Connor: [conjfrnk.com](https://conjfrnk.com) & [GitHub](https://github.com/conjfrnk)
 - Jacob: [GitHub](https://github.com/jacobdavis3)
 - Alex: [GitHub](https://github.com/AlexDelistathis)
 - Matthew: [GitHub](https://github.com/mattzhang80)
