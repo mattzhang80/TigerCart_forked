@@ -17,3 +17,5 @@
 - [ ] Real items, not placeholders
 - [ ] Real orders, not placeholders
 - [ ] More style
+- [ ] Live U-Store data (?)
+- [ ] Princeton CAS Connection (?) or Google account authentication (easier)
