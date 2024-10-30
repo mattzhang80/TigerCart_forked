@@ -1,6 +1,6 @@
 # TigerCart
 
-[tigercart.shop](https://tigercart.shop) (not live yet, but working)
+[tigercart.shop](https://tigercart.shop) (not live yet, but working to get it up)
 
 ## Made by
 
