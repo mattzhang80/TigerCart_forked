@@ -1,12 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const messageElement = document.getElementById('js-working');
-    messageElement.textContent += ' yes';
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.add-to-cart').forEach(button => {
-        button.addEventListener('click', () => {
-            const itemId = button.getAttribute('data-item-id');
+    // Event delegation for dynamically added buttons
+    document.body.addEventListener('click', function(event) {
+        if (event.target.classList.contains('add-to-cart')) {
+            const itemId = event.target.getAttribute('data-item-id');
             fetch(`/add_to_cart/${itemId}`, {
                 method: 'POST'
             }).then(response => {
@@ -14,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Item added to cart!');
                 }
             });
-        });
+        }
     });
 });
 

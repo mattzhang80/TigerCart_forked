@@ -6,10 +6,13 @@ app = Flask(__name__)
 cart = {}
 
 # Sample items (load from database later)
-items = {
-    "1": {"name": "Coke", "price": 1.09},
-    "2": {"name": "Diet Coke", "price": 1.29},
-    "3": {"name": "Tropicana Orange Juice", "price": 0.89}
+sample_items = {
+    "1": {"name": "Coke", "price": 1.09, "category": "drinks"},
+    "2": {"name": "Diet Coke", "price": 1.29, "category": "drinks"},
+    "3": {"name": "Tropicana Orange Juice", "price": 0.89, "category": "drinks"},
+    "4": {"name": "Lay’s Potato Chips", "price": 1.59, "category": "food"},
+    "5": {"name": "Snickers Bar", "price": 0.99, "category": "food"},
+    "6": {"name": "Notebook", "price": 2.49, "category": "other"},
 }
 
 @app.route('/')
@@ -18,20 +21,20 @@ def home():
 
 @app.route('/shop')
 def shop():
-    return render_template('shop.html', items=items)
+    return render_template('shop.html')
 
 @app.route('/category/<category>')
 def category(category):
     # Filter or load items based on the category
-    items_in_category = {k: v for k, v in items.items() if v.get("category") == category}
+    items_in_category = {k: v for k, v in sample_items.items() if v.get("category") == category}
     return render_template('category.html', category=category, items=items_in_category)
 
 @app.route('/cart_view')
 def cart_view():
-    subtotal = sum(details['quantity'] * items[item_id]['price'] for item_id, details in cart.items())
+    subtotal = sum(details['quantity'] * sample_items[item_id]['price'] for item_id, details in cart.items())
     delivery_fee = round(subtotal * 0.1, 2)
     total = round(subtotal + delivery_fee, 2)
-    return render_template('cart_view.html', cart=cart, items=items, subtotal=subtotal, delivery_fee=delivery_fee, total=total)
+    return render_template('cart_view.html', cart=cart, items=sample_items, subtotal=subtotal, delivery_fee=delivery_fee, total=total)
 
 @app.route('/add_to_cart/<item_id>', methods=['POST'])
 def add_to_cart(item_id):

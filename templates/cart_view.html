@@ -19,6 +19,10 @@
     <p>Delivery Fee (10%): ${{ delivery_fee }}</p>
     <p>Total: ${{ total }}</p>
     <button onclick="window.location.href='{{ url_for("order_confirmation") }}'">Place Order</button>
+    <br>
+    <br>
+    <a href="{{ url_for('shop') }}">Select More Items</a>
+    <!-- Include the script -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
-
