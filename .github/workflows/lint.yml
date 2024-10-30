@@ -35,8 +35,14 @@ jobs:
           # Output the complete pylint report to the GitHub Actions log
           echo "$pylint_output"
           
-          # Extract the pylint score from the output
-          pylint_score=$(echo "$pylint_output" | tail -2 | head -1 | awk '{print $7}')
+          # Extract the pylint score from the output with improved pattern matching
+          pylint_score=$(echo "$pylint_output" | grep "Your code has been rated at" | awk '{print $7}' | cut -d'/' -f1)
+
+          # Check if pylint_score was successfully captured
+          if [ -z "$pylint_score" ]; then
+            echo "Failed to capture pylint score. Failing the workflow."
+            exit 1
+          fi
           
           # Export the pylint score to GitHub Actions environment variable
           echo "pylint_score=$pylint_score" >> $GITHUB_ENV
