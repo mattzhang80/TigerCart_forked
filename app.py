@@ -44,6 +44,12 @@ def add_to_cart(item_id):
         cart[item_id] = {'quantity': 1}
     return jsonify(cart)
 
+@app.route('/delete_item/<item_id>', methods=['POST'])
+def delete_item(item_id):
+    if item_id in cart:
+        del cart[item_id]
+    return jsonify(cart)
+
 @app.route('/update_cart/<item_id>/<action>', methods=['POST'])
 def update_cart(item_id, action):
     if action == 'increase':

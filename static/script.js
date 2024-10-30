@@ -22,6 +22,16 @@ function updateQuantity(itemId, action) {
         });
 }
 
+function deleteItem(itemId) {
+    if (confirm('Are you sure you want to remove this item from your cart?')) {
+        fetch(`/delete_item/${itemId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(cart => {
+                location.reload();  // Refresh to reflect the updated cart view
+            });
+    }
+}
+
 function placeOrder() {
     fetch('/place_order', { method: 'POST' })
         .then(() => {
