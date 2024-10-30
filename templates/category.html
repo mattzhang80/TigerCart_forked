@@ -1,22 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ category.capitalize() }} - TigerCart</title>
-</head>
-<body>
-    <h1>{{ category.capitalize() }}</h1>
-    <ul>
-        {% for item_id, item in items.items() %}
-        <li>{{ item.name }} - ${{ item.price }}
-            <button class="add-to-cart" data-item-id="{{ item_id }}">Add to Cart</button>
-        </li>
-        {% endfor %}
-    </ul>
-    <a href="{{ url_for('cart_view') }}">View Cart</a>
-    <br>
-    <a href="{{ url_for('shop') }}">Back to Category View</a>
-    <!-- Include the script -->
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}{{ category.capitalize() }} - TigerCart{% endblock %}
+
+{% block content %}
+<h1>{{ category.capitalize() }}</h1>
+<ul>
+    {% for item_id, item in items.items() %}
+    <li>{{ item.name }} - ${{ item.price }}
+        <button class="add-to-cart" data-item-id="{{ item_id }}">Add to Cart</button>
+    </li>
+    {% endfor %}
+</ul>
+<a href="{{ url_for('cart_view') }}">View Cart</a>
+{% endblock %}

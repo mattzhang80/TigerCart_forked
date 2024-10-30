@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}TigerCart{% endblock %}</title>
+    <!-- Include any common CSS here -->
+    <style>
+        /* Style for the back arrow */
+        .back-arrow {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+        }
+        
+        .back-arrow img {
+            display: block;
+        }
+
+        /* Center content and add top margin */
+        .content-wrapper {
+            text-align: center;
+            margin-top: 44px;
+        }
+
+        /* Center list items and remove bullets */
+        .content-wrapper ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .content-wrapper li {
+            margin: 10px 0;
+        }
+
+        /* Style buttons and links */
+        .content-wrapper button, .content-wrapper a {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px 20px;
+            text-decoration: none;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .content-wrapper button:hover, .content-wrapper a:hover {
+            background-color: #0056b3;
+        }
+
+        /* Adjust headings */
+        .content-wrapper h1 {
+            margin-bottom: 20px;
+        }
+
+        /* Optional: Adjust paragraphs */
+        .content-wrapper p {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    {% if request.endpoint != 'home' %}
+    <a href="#" onclick="goBack()" class="back-arrow">
+        <svg width="24" height="24" viewBox="0 0 24 24">
+            <path d="M15 18l-6-6 6-6" stroke="black" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+    {% endif %}
+
+
+    <div class="content-wrapper">
+        {% block content %}
+        <!-- Page-specific content will be inserted here -->
+        {% endblock %}
+    </div>
+
+    <!-- Include common scripts -->
+    <script>
+        function goBack() {
+            if (document.referrer !== "") {
+                window.history.back();
+            } else {
+                window.location.href = "{{ url_for('home') }}";
+            }
+        }
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

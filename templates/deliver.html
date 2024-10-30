@@ -1,19 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Deliver - TigerCart</title>
-</head>
-<body>
-    <h1>Available Deliveries</h1>
-    <ul>
-        {% for delivery in deliveries %}
-        <li>
-            {{ delivery.item_count }} items to {{ delivery.location }} - Earnings: ${{ delivery.earnings }}
-            <a href="{{ url_for('delivery_details', delivery_id=delivery.id) }}">See More</a>
-        </li>
-        {% endfor %}
-    </ul>
-    <a href="{{ url_for('home') }}">Home</a>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Available Deliveries - TigerCart{% endblock %}
+
+{% block content %}
+<h1>Available Deliveries</h1>
+<ul>
+    {% for delivery in deliveries %}
+    <li>
+        {{ delivery.item_count }} items to {{ delivery.location }} - Earnings: ${{ delivery.earnings }}
+        <a href="{{ url_for('delivery_details', delivery_id=delivery.id) }}">See More</a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
