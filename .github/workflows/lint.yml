@@ -29,7 +29,9 @@ jobs:
       - name: Run Pylint
         id: pylint
         run: |
-          pylint_score=$(pylint $(find . -name "*.py") | tee /dev/tty | tail -2 | head -1 | awk '{print $7}')
+          pylint_output=$(pylint $(find . -name "*.py"))
+          echo "$pylint_output"
+          pylint_score=$(echo "$pylint_output" | tail -2 | head -1 | awk '{print $7}')
           echo "pylint_score=$pylint_score" >> $GITHUB_ENV
         shell: bash
 
