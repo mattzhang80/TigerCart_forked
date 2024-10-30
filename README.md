@@ -1,5 +1,7 @@
 # TigerCart
 
+[tigercart.shop](https://tigercart.shop) (not live yet, but working)
+
 ## Made by
 
 - Connor: [website](https://conjfrnk.com) & [GitHub](https://github.com/conjfrnk)
@@ -19,3 +21,4 @@
 - [ ] More style
 - [ ] Live U-Store data (?)
 - [ ] Princeton CAS Connection (?) or Google account authentication (easier)
+- [ ] Website Live
