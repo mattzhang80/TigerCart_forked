@@ -1,0 +1,44 @@
+name: Python Linting
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black pylint
+
+      - name: Run Black
+        run: |
+          black --check .
+
+      - name: Run Pylint
+        id: pylint
+        run: |
+          pylint_score=$(pylint $(find . -name "*.py") | tee /dev/tty | tail -2 | head -1 | awk '{print $7}')
+          echo "pylint_score=$pylint_score" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Check Pylint Score
+        if: ${{ env.pylint_score != '10.00' }}
+        run: |
+          echo "Pylint score is not 10.00. Failing the workflow."
+          exit 1
