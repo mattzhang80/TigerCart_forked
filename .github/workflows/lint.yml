@@ -40,10 +40,13 @@ jobs:
           
           # Export the pylint score to GitHub Actions environment variable
           echo "pylint_score=$pylint_score" >> $GITHUB_ENV
+          
+          # Output the Pylint score in the desired format
+          echo "Pylint score is $pylint_score"
         shell: bash
 
       - name: Check Pylint Score
         if: ${{ env.pylint_score != '10.00' }}
         run: |
-          echo "Pylint score is not 10.00. Failing the workflow."
+          echo "Pylint score is ${{ env.pylint_score }}. Failing the workflow."
           exit 1
