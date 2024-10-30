@@ -32,10 +32,14 @@ function deleteItem(itemId) {
     }
 }
 
-function placeOrder() {
+function placeOrder(itemsInCart) {
     fetch('/place_order', { method: 'POST' })
         .then(() => {
-            alert('Order placed successfully!');
+            if (itemsInCart === 0) {
+                alert('No items in cart, please go back and make an order!')
+            }
+            else
+                alert('Order placed successfully!');
             window.location.href = '/';
         });
 }

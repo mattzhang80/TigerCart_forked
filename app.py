@@ -154,7 +154,8 @@ def update_cart(item_id, action):
 @app.route("/order_confirmation")
 def order_confirmation():
     """Render the order confirmation page."""
-    return render_template("order_confirmation.html")
+    itemsInCart = len(cart)
+    return render_template("order_confirmation.html", itemsInCart=itemsInCart)
 
 
 @app.route("/place_order", methods=["POST"])
