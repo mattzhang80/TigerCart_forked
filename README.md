@@ -14,6 +14,7 @@
 
 - [X] Bare-bones web-app
 - [X] Some style
+- [X] GitHub Actions CodeQL and pylint
 - [ ] Server
 - [ ] Database
 - [ ] Real items, not placeholders
