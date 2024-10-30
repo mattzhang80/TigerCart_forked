@@ -29,9 +29,16 @@ jobs:
       - name: Run Pylint
         id: pylint
         run: |
+          # Run pylint on all Python files and capture the output
           pylint_output=$(pylint $(find . -name "*.py"))
+          
+          # Output the complete pylint report to the GitHub Actions log
           echo "$pylint_output"
+          
+          # Extract the pylint score from the output
           pylint_score=$(echo "$pylint_output" | tail -2 | head -1 | awk '{print $7}')
+          
+          # Export the pylint score to GitHub Actions environment variable
           echo "pylint_score=$pylint_score" >> $GITHUB_ENV
         shell: bash
 
