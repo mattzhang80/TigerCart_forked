@@ -28,6 +28,15 @@
             position: fixed;
             top: 10px;
             left: 10px;
+            width: 60px;  /* Increase size for better visibility */
+            height: 60px;  /* Increase size for better visibility */
+            background: rgba(0, 0, 0, 0.1);  /* Light background to make the arrow more noticeable */
+            border-radius: 50%;  /* Make it round to visually indicate it's a button */
+            display: flex;  /* Use flex to center the icon */
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;  /* Change cursor to pointer to indicate it’s clickable */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);  /* Add subtle shadow for depth */
         }
         
         .back-arrow img {
@@ -42,7 +51,10 @@
             border-radius: 15px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             margin-top: 40px;
-            align-items: flex-start
+            align-items: flex-start;
+            min-width: 300px;
+            width: 60%; /* ADJUST THIS FOR CLEANER LOOK??? */
+            max-width: 800px; 
         }
 
         /* Center list items and remove bullets */
