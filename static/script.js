@@ -43,3 +43,12 @@ function placeOrder(itemsInCart) {
             window.location.href = '/';
         });
 }
+
+function acceptDelivery(deliveryId) {
+    alert('Delivery accepted');
+    window.location.href = '/deliver';
+}
+
+function declineDelivery(deliveryId) {
+    alert('Delivery declined');
+}

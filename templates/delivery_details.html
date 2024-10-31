@@ -13,14 +13,3 @@
 <button onclick="acceptDelivery({{ delivery.id }})">Accept</button>
 <button onclick="declineDelivery({{ delivery.id }})">Decline</button>
 {% endblock %}
-
-<script>
-function acceptDelivery(deliveryId) {
-    alert('Delivery accepted');
-    window.location.href = '/deliver';
-}
-
-function declineDelivery(deliveryId) {
-    alert('Delivery declined');
-}
-</script>
