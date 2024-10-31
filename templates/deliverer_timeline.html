@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Deliverer Timeline{% endblock %}
+
+{% block content %}
+<h1>Delivery Timeline</h1>
+<div class="timeline">
+    <div class="step" id="shopping-step">
+        <div class="circle"></div>
+        <span>Shopping in U-Store</span>
+        <span class="status" id="shopping-status">Not Completed</span>
+    </div>
+    <div class="step" id="checking-out-step">
+        <div class="circle"></div>
+        <span>Checking Out</span>
+        <span class="status" id="checking-out-status">Not Completed</span>
+    </div>
+    <div class="step" id="on-delivery-step">
+        <div class="circle"></div>
+        <span>On Delivery</span>
+        <span class="status" id="on-delivery-status">Not Completed</span>
+    </div>
+    <div class="step" id="delivered-step">
+        <div class="circle"></div>
+        <span>Delivered</span>
+        <span class="status" id="delivered-status">Not Completed</span>
+    </div>
+</div>
+{% endblock %}

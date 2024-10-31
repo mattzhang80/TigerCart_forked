@@ -231,6 +231,12 @@ def delivery_details(delivery_id):
     }
     return render_template("delivery_details.html", delivery=delivery)
 
+@app.route("/timeline")
+def delivery_timeline():
+    ##### Fix but we night a timeline where the deliverer
+    ##### can update but also see what they have to buy
+    return render_template("deliverer_timeline.html")
+
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)
