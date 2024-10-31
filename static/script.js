@@ -53,3 +53,14 @@ function acceptDelivery(deliveryId) {
 function declineDelivery(deliveryId) {
     alert('Delivery declined');
 }
+
+function markStepComplete(stepId) {
+    const stepElement = document.getElementById(stepId);
+    const circleElement = stepElement.querySelector('.circle');
+    const buttonElement = stepElement.querySelector('button');
+
+    // Change circle appearance and button status
+    circleElement.classList.add('complete');
+    buttonElement.textContent = 'Completed';
+    buttonElement.style.backgroundColor = 'green';
+}

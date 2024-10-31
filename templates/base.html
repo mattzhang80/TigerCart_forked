@@ -43,6 +43,18 @@
             display: block;
         }
 
+        .circle {
+            width: 50px; /* Adjust size as needed */
+            height: 50px; /* Same as width to ensure it's a circle */
+            border-radius: 50%; /* Makes the div a circle */
+            background-color: gray; /* Optional: gives the circle a background color */
+        }
+
+        .circle.complete {
+            background-color: green; /* Change color when complete */
+        }
+
+
         /* Center content and add top margin */
         .content-wrapper {
             text-align: center;
@@ -103,6 +115,37 @@
         /* Optional: Adjust paragraphs */
         .content-wrapper p {
             margin-bottom: 20px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            position: relative;
+            justify-content: space-between;
+        }
+
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 30px; /* Center line with circles */
+            top: 50px; /* Adjust to match the circle size */
+            height: 50px; /* Height of the line */
+            width: 2px; /* Thickness of the line */
+            background-color: gray; /* Change color for completed steps */
+        }
+
+        .step-text {
+            margin-left: 20px;
+            font-size: 18px;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            margin-left: 20px;
+            position: relative;
+            justify-content: center;
         }
     </style>
 </head>

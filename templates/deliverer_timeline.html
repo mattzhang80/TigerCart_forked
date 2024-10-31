@@ -6,23 +6,23 @@
 <div class="timeline">
     <div class="step" id="shopping-step">
         <div class="circle"></div>
-        <span>Shopping in U-Store</span>
-        <span class="status" id="shopping-status">Not Completed</span>
+        <span class="step-text">Shopping in U-Store</span>
+        <button onclick="markStepComplete('shopping-step')" id="shopping-status">Not Completed</button>
     </div>
     <div class="step" id="checking-out-step">
         <div class="circle"></div>
-        <span>Checking Out</span>
-        <span class="status" id="checking-out-status">Not Completed</span>
+        <span class="step-text">Checking Out</span>
+        <button onclick="markStepComplete('checking-out-step')" id="checking-out-status">Not Completed</button>
     </div>
     <div class="step" id="on-delivery-step">
         <div class="circle"></div>
-        <span>On Delivery</span>
-        <span class="status" id="on-delivery-status">Not Completed</span>
+        <span class="step-text">On delivery</span>
+        <button onclick="markStepComplete('on-delivery-step')" id="on-delivery-status">Not Completed</button>
     </div>
     <div class="step" id="delivered-step">
         <div class="circle"></div>
-        <span>Delivered</span>
-        <span class="status" id="delivered-status">Not Completed</span>
+        <span class="step-text">Delivered</span>
+        <button onclick="markStepComplete('delivered-step')" id='delivered-status'>Not Completed</button>
     </div>
 </div>
 {% endblock %}
