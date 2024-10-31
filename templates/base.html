@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>{% block title %}TigerCart{% endblock %}</title>
     <!-- Include any common CSS here -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -15,6 +16,13 @@
             justify-content: center;
             align-items: flex-start
         }
+
+        h1 {
+            font-size: 3em;
+            color: #ff5722;
+            margin-bottom: 20px;
+        }
+
         /* Style for the back arrow */
         .back-arrow {
             position: fixed;
@@ -30,7 +38,7 @@
         .content-wrapper {
             text-align: center;
             background: rgba(255, 255, 255, 0.8);
-            padding: 40px;
+            padding: 20px;
             border-radius: 15px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             margin-top: 40px;
