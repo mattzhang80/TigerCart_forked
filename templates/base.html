@@ -5,6 +5,16 @@
     <title>{% block title %}TigerCart{% endblock %}</title>
     <!-- Include any common CSS here -->
     <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            color: #333;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start
+        }
         /* Style for the back arrow */
         .back-arrow {
             position: fixed;
@@ -19,7 +29,12 @@
         /* Center content and add top margin */
         .content-wrapper {
             text-align: center;
-            margin-top: 44px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-top: 40px;
+            align-items: flex-start
         }
 
         /* Center list items and remove bullets */
@@ -56,6 +71,8 @@
 
         .content-wrapper button:hover, .content-wrapper a:hover {
             background-color: #0056b3;
+            transform: translateY(-2px); /* Button animation that rises*/
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Shadow on hover*/
         }
 
         /* Adjust headings */
