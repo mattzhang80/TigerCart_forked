@@ -233,8 +233,10 @@ def delivery_details(delivery_id):
 
 @app.route("/timeline")
 def delivery_timeline():
-    ##### Fix but we night a timeline where the deliverer
-    ##### can update but also see what they have to buy
+    '''
+    Fix but we night a timeline where the deliverer
+    can update but also see what they have to buy
+    '''
     return render_template("deliverer_timeline.html")
 
 
