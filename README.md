@@ -15,6 +15,7 @@
 - [X] Bare-bones web-app
 - [X] Some style
 - [X] GitHub Actions CodeQL and pylint
+- [X] Website Live
 - [ ] Server
 - [ ] Database
 - [ ] Real items, not placeholders
@@ -22,4 +23,3 @@
 - [ ] More style
 - [ ] Live U-Store data (?)
 - [ ] Princeton CAS Connection (?) or Google account authentication (easier)
-- [ ] Website Live
