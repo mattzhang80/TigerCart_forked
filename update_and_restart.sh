@@ -17,7 +17,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
 
     # Restart the server after pulling changes
     echo "Restarting Gunicorn..."
-    pkill gunicorn
+    doas pkill -f "gunicorn --bind 127.0.0.1:8000"
     . tigercart_env/bin/activate
     gunicorn --bind 127.0.0.1:8000 app:app --workers 5 &
 else
