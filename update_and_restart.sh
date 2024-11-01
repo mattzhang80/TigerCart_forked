@@ -6,14 +6,14 @@
 cd /home/app/tigercart
 
 # Pull the latest changes from the Git repository
-git fetch origin
-LOCAL=$(git rev-parse @)
-REMOTE=$(git rev-parse @{u})
+/usr/local/bin/git fetch origin
+LOCAL=$(/usr/local/bin/git rev-parse @)
+REMOTE=$(/usr/local/bin/git rev-parse @{u})
 
 # Check if there are updates in the remote repository
 if [ "$LOCAL" != "$REMOTE" ]; then
     echo "New changes detected. Pulling changes..."
-    git pull origin main  # Replace 'main' with your branch name if different
+    /usr/local/bin/git pull origin main  # Replace 'main' with your branch name if different
 
     # Restart the server after pulling changes
     echo "Restarting Gunicorn..."
