@@ -42,7 +42,6 @@ deliveries = {
                 "quantity": 1,
             },
         ],
-        "total": 16.14,
     },
     "2": {
         "id": "2",
@@ -52,7 +51,6 @@ deliveries = {
         "delivery_items": [
             {"name": "Coke", "price": 1.09, "quantity": 1}
         ],
-        "total": 1.09,
     },
     "3": {
         "id": "3",
@@ -63,7 +61,6 @@ deliveries = {
             {"name": "Notebook", "price": 2.49, "quantity": 8},
             {"name": "Snickers Bar", "price": 0.99, "quantity": 12},
         ],
-        "total": 33.72,
     },
 }
 
@@ -103,9 +100,14 @@ def get_deliveries():
 
 @app.route("/delivery/<delivery_id>", methods=["GET"])
 def get_delivery(delivery_id):
-    """Return details of a specific delivery by ID."""
+    """Return details of a specific delivery by ID, with calculated totals."""
     delivery = deliveries.get(delivery_id)
     if delivery:
+        total = sum(
+            item["price"] * item["quantity"]
+            for item in delivery["delivery_items"]
+        )
+        delivery["total"] = round(total, 2)
         return jsonify(delivery)
     return jsonify({"error": "Delivery not found"}), 404
 
