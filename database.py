@@ -5,7 +5,6 @@ Populates tigercart.sqlite3 and users.sqlite3
 """
 
 import sqlite3
-from datetime import datetime
 
 # Define database file names
 MAIN_DATABASE = "tigercart.sqlite3"
@@ -13,22 +12,24 @@ USER_DATABASE = "users.sqlite3"
 
 
 def get_main_db_connection():
+    """Establishes and returns a connection to the main database."""
     conn = sqlite3.connect(MAIN_DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def get_user_db_connection():
+    """Establishes and returns a connection to the user database."""
     conn = sqlite3.connect(USER_DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def init_main_db():
+    """Initializes the main database with necessary tables."""
     conn = get_main_db_connection()
     cursor = conn.cursor()
 
-    # Create items and orders tables
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS items (
@@ -55,7 +56,6 @@ def init_main_db():
     """
     )
 
-    # Modify the cart table to include user_id
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS cart (
@@ -72,10 +72,10 @@ def init_main_db():
 
 
 def init_user_db():
+    """Initializes the user database with necessary tables."""
     conn = get_user_db_connection()
     cursor = conn.cursor()
 
-    # Add users table with a cart column for storing cart data
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS users (
@@ -91,6 +91,7 @@ def init_user_db():
 
 
 def populate_items(sample_items):
+    """Populates the items table with sample data."""
     conn = get_main_db_connection()
     cursor = conn.cursor()
 
@@ -105,10 +106,10 @@ def populate_items(sample_items):
 
 
 def populate_users():
+    """Populates the users table with initial users."""
     conn = get_user_db_connection()
     cursor = conn.cursor()
 
-    # Add initial users
     users = [
         (1, "Connor"),
         (2, "Jacob"),

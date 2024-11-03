@@ -4,6 +4,8 @@ app.py
 Authors: TigerCart team
 """
 
+import json
+import requests
 from flask import (
     Flask,
     render_template,
@@ -13,8 +15,6 @@ from flask import (
     session,
     jsonify,
 )
-import requests
-import json
 from config import get_debug_mode
 from database import get_main_db_connection, get_user_db_connection
 
@@ -31,6 +31,7 @@ DELIVERY_FEE_PERCENTAGE = 0.1
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    """Login page to authenticate the user."""
     if request.method == "POST":
         user_id = request.form.get("user_id")
         session["user_id"] = user_id
@@ -54,12 +55,14 @@ def login():
 
 @app.route("/logout", methods=["POST"])
 def logout():
+    """Logs the user out and clears the session."""
     session["user_id"] = None
     return "", 204
 
 
 @app.route("/")
 def home():
+    """Home page. Redirects to login if user is not logged in."""
     if "user_id" not in session:
         return redirect(url_for("login"))
     return render_template("home.html")
@@ -67,6 +70,7 @@ def home():
 
 @app.route("/shop")
 def shop():
+    """Displays items available in the shop."""
     response = requests.get(
         f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT
     )
@@ -76,6 +80,7 @@ def shop():
 
 @app.route("/category_view/<category>")
 def category_view(category):
+    """Displays items in a specific category."""
     response = requests.get(
         f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT
     )
@@ -92,6 +97,7 @@ def category_view(category):
 
 @app.route("/cart_view")
 def cart_view():
+    """Displays the cart view with item subtotals and total cost."""
     items_response = requests.get(
         f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT
     )
@@ -102,7 +108,6 @@ def cart_view():
     sample_items = items_response.json()
     cart = cart_response.json()
 
-    # Safely calculate subtotal by ensuring each item in cart has a "quantity"
     subtotal = sum(
         details.get("quantity", 0)
         * sample_items.get(item_id, {}).get("price", 0)
@@ -124,6 +129,7 @@ def cart_view():
 
 @app.route("/add_to_cart/<item_id>", methods=["POST"])
 def add_to_cart(item_id):
+    """Adds an item to the cart."""
     response = requests.post(
         f"{SERVER_URL}/cart",
         json={"item_id": item_id, "action": "add"},
@@ -134,6 +140,7 @@ def add_to_cart(item_id):
 
 @app.route("/delete_item/<item_id>", methods=["POST"])
 def delete_item(item_id):
+    """Deletes an item from the cart."""
     response = requests.post(
         f"{SERVER_URL}/cart",
         json={"item_id": item_id, "action": "delete"},
@@ -144,6 +151,7 @@ def delete_item(item_id):
 
 @app.route("/update_cart/<item_id>/<action>", methods=["POST"])
 def update_cart(item_id, action):
+    """Updates the cart by increasing or decreasing item quantities."""
     response = requests.get(
         f"{SERVER_URL}/cart", timeout=REQUEST_TIMEOUT
     )
@@ -178,6 +186,7 @@ def update_cart(item_id, action):
 
 @app.route("/order_confirmation")
 def order_confirmation():
+    """Displays the order confirmation page with items in cart."""
     response = requests.get(
         f"{SERVER_URL}/cart", timeout=REQUEST_TIMEOUT
     )
@@ -189,6 +198,7 @@ def order_confirmation():
 
 @app.route("/place_order", methods=["POST"])
 def place_order():
+    """Places an order and clears the user's cart."""
     conn = get_main_db_connection()
     user_conn = get_user_db_connection()
     cursor = conn.cursor()
@@ -197,7 +207,6 @@ def place_order():
     user_id = session.get("user_id")
     delivery_location = request.form.get("delivery_location")
 
-    # Retrieve the user's cart data
     user = user_cursor.execute(
         "SELECT cart FROM users WHERE user_id = ?", (user_id,)
     ).fetchone()
@@ -220,7 +229,9 @@ def place_order():
     )
 
     cursor.execute(
-        "INSERT INTO orders (status, user_id, items, prices, quantities, delivery_location) VALUES (?, ?, ?, ?, ?, ?)",
+        """INSERT INTO orders
+        (status, user_id, items, prices, quantities, delivery_location)
+        VALUES (?, ?, ?, ?, ?, ?)""",
         (
             "placed",
             user_id,
@@ -244,6 +255,7 @@ def place_order():
 
 @app.route("/deliver")
 def deliver():
+    """Displays all deliveries available for claiming."""
     response = requests.get(
         f"{SERVER_URL}/deliveries", timeout=REQUEST_TIMEOUT
     )
@@ -255,6 +267,7 @@ def deliver():
 
 @app.route("/delivery/<delivery_id>")
 def delivery_details(delivery_id):
+    """Displays details of a specific delivery."""
     response = requests.get(
         f"{SERVER_URL}/delivery/{delivery_id}", timeout=REQUEST_TIMEOUT
     )
@@ -268,6 +281,7 @@ def delivery_details(delivery_id):
 
 @app.route("/timeline")
 def delivery_timeline():
+    """Displays a timeline for delivery activities."""
     return render_template("deliverer_timeline.html")
 
 

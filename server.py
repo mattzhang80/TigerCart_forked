@@ -4,8 +4,8 @@ server.py
 Serves data for the TigerCart app.
 """
 
-from flask import Flask, jsonify, request, session
 import json
+from flask import Flask, jsonify, request, session
 from database import get_main_db_connection, get_user_db_connection
 
 app = Flask(__name__)
@@ -16,23 +16,23 @@ app.secret_key = (
 
 @app.route("/items", methods=["GET"])
 def get_items():
+    """Fetches and returns all items available in the store."""
     conn = get_main_db_connection()
     cursor = conn.cursor()
     items = cursor.execute("SELECT * FROM items").fetchall()
     conn.close()
 
-    # Convert each Row object to a dictionary
     items_dict = {str(item["id"]): dict(item) for item in items}
     return jsonify(items_dict)
 
 
 @app.route("/cart", methods=["GET", "POST"])
 def manage_cart():
+    """Manages the user's cart with retrieval, addition, or update actions."""
     user_id = session.get("user_id")
     conn = get_user_db_connection()
     cursor = conn.cursor()
 
-    # Retrieve the current user's cart from the users table
     user = cursor.execute(
         "SELECT cart FROM users WHERE user_id = ?", (user_id,)
     ).fetchone()
@@ -40,19 +40,16 @@ def manage_cart():
         conn.close()
         return jsonify({"error": "User not found"}), 404
 
-    # Parse the cart as a dictionary or set it to an empty dictionary
     try:
         cart = json.loads(user["cart"]) if user["cart"] else {}
     except json.JSONDecodeError:
         cart = {}
 
     if request.method == "POST":
-        # Update the cart based on the action in the POST request
         cart_data = request.json
         item_id = cart_data.get("item_id")
         action = cart_data.get("action")
 
-        # Modify cart structure according to action
         if action == "add":
             cart[item_id] = {
                 "quantity": cart.get(item_id, {}).get("quantity", 0) + 1
@@ -66,7 +63,6 @@ def manage_cart():
             else:
                 cart.pop(item_id, None)
 
-        # Save the updated cart as a JSON string in the database
         cursor.execute(
             "UPDATE users SET cart = ? WHERE user_id = ?",
             (json.dumps(cart), user_id),
@@ -79,6 +75,7 @@ def manage_cart():
 
 @app.route("/deliveries", methods=["GET"])
 def get_deliveries():
+    """Fetches and returns all deliveries with their details and earnings."""
     conn = get_main_db_connection()
     cursor = conn.cursor()
     orders = cursor.execute(
@@ -105,6 +102,7 @@ def get_deliveries():
 
 @app.route("/delivery/<delivery_id>", methods=["GET"])
 def get_delivery(delivery_id):
+    """Fetches and returns details of a specific delivery."""
     conn = get_main_db_connection()
     cursor = conn.cursor()
     order = cursor.execute(
