@@ -17,7 +17,7 @@ import requests
 app = Flask(__name__)
 
 # Define the base URL for the server
-SERVER_URL = "http://localhost:5150"
+SERVER_URL = "https://localhost:5150"
 
 
 @app.route("/")
