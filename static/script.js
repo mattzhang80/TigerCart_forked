@@ -46,7 +46,6 @@ function placeOrder(itemsInCart) {
 function acceptDelivery(deliveryId) {
     alert('Delivery accepted');
     window.location.href = '/timeline'
-    /*Change this with the time line when ur ready*/;
 }
 
 function declineDelivery(deliveryId) {
