@@ -7,7 +7,7 @@
     {% for item_id, details in cart.items() %}
         {% if item_id in items %}
         <li>
-            {{ items[item_id].name }} - ${{ items[item_id].price }}
+            {{ items[item_id].name }} - ${{ "%.2f"|format(items[item_id].price) }}
             <br>
             Quantity: {{ details.quantity }}
             <button onclick="updateQuantity('{{ item_id }}', 'decrease')">-</button>
@@ -22,8 +22,8 @@
     <li>Your cart is empty.</li>
     {% endfor %}
 </ul>
-<p>Subtotal: ${{ subtotal|round(2) }}</p>
-<p>Delivery Fee (10%): ${{ delivery_fee|round(2) }}</p>
-<p>Total: ${{ total|round(2) }}</p>
+<p>Subtotal: ${{ "%.2f"|format(subtotal) }}</p>
+<p>Delivery Fee (10%): ${{ "%.2f"|format(delivery_fee) }}</p>
+<p>Total: ${{ "%.2f"|format(total) }}</p>
 <button onclick="window.location.href='{{ url_for("order_confirmation") }}'">Place Order</button>
 {% endblock %}
