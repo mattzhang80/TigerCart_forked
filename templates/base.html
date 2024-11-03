@@ -301,6 +301,11 @@
             }
         }
     </script>
+
+    <script>
+        const userId = "{{ session.get('user_id') }}";
+    </script>
+
     <script>
         function goBack() {
             if (document.referrer && document.referrer.includes(window.location.hostname)) {

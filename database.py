@@ -56,17 +56,7 @@ def init_main_db():
     """
     )
 
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS cart (
-            item_id TEXT,
-            quantity INTEGER,
-            user_id INTEGER,
-            PRIMARY KEY (item_id, user_id)
-        )
-    """
-    )
-
+    # Removed the cart table creation from tigercart.sqlite3
     conn.commit()
     conn.close()
 

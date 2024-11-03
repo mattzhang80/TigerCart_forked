@@ -2,45 +2,90 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('click', function(event) {
         if (event.target.classList.contains('add-to-cart')) {
             const itemId = event.target.getAttribute('data-item-id');
-            fetch(`/add_to_cart/${itemId}`, {
-                method: 'POST'
-            }).then(response => {
-                if (response.ok) {
-                    alert('Item added to cart!');
-                }
-            });
+            addToCart(itemId);
         }
     });
 });
 
+function addToCart(itemId) {
+    fetch(`/add_to_cart/${itemId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: userId })  // Ensure userId is available globally
+    }).then(response => {
+        if (response.ok) {
+            alert('Item added to cart!');
+        } else {
+            response.json().then(data => alert('Error: ' + data.error));
+        }
+    }).catch(error => {
+        console.error('Error adding to cart:', error);
+        alert('Failed to add item to cart.');
+    });
+}
+
 function updateQuantity(itemId, action) {
-    fetch(`/update_cart/${itemId}/${action}`, { method: 'POST' })
-        .then(response => response.json())
-        .then(cart => {
-            location.reload();  // Refresh to reflect the updated cart view
-        });
+    fetch(`/update_cart/${itemId}/${action}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user_id: userId })  // Ensure userId is globally defined
+    })
+    .then(response => response.json())
+    .then(cart => {
+        location.reload();  // Refresh to reflect the updated cart view
+    })
+    .catch(error => {
+        console.error('Error updating quantity:', error);
+        alert('Failed to update item quantity.');
+    });
 }
 
 function deleteItem(itemId) {
     if (confirm('Are you sure you want to remove this item from your cart?')) {
-        fetch(`/delete_item/${itemId}`, { method: 'POST' })
-            .then(response => response.json())
-            .then(cart => {
-                location.reload();  // Refresh to reflect the updated cart view
-            });
+        fetch(`/delete_item/${itemId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id: userId })
+        }).then(response => response.json())
+          .then(cart => location.reload());  // Refresh to reflect updated cart view
     }
 }
 
 function placeOrder(itemsInCart) {
-    fetch('/place_order', { method: 'POST' })
-        .then(() => {
-            if (itemsInCart === 0) {
-                alert('No items in cart, please go back and make an order!')
-            }
-            else
+    if (itemsInCart === 0) {
+        alert('No items in cart, please go back and make an order!');
+        return;
+    }
+
+    // Prompt the user for a delivery location
+    const deliveryLocation = prompt("Please enter the delivery location:");
+
+    // If a location is provided, proceed with placing the order
+    if (deliveryLocation) {
+        fetch('/place_order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ delivery_location: deliveryLocation })
+        })
+        .then(response => {
+            if (response.ok) {
                 alert('Order placed successfully!');
-            window.location.href = '/';
+                window.location.href = '/';
+            } else {
+                alert('Failed to place the order.');
+            }
         });
+    } else {
+        alert("Delivery location is required to place an order.");
+    }
 }
 
 function acceptDelivery(deliveryId) {

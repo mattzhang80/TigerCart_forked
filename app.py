@@ -15,13 +15,11 @@ from flask import (
     session,
     jsonify,
 )
-from config import get_debug_mode
+from config import get_debug_mode, SECRET_KEY
 from database import get_main_db_connection, get_user_db_connection
 
 app = Flask(__name__)
-app.secret_key = (
-    "your_secret_key"  # Set a secure secret key for sessions
-)
+app.secret_key = SECRET_KEY
 
 # Define the base URL for the server
 SERVER_URL = "http://localhost:5150"
@@ -34,7 +32,7 @@ def login():
     """Login page to authenticate the user."""
     if request.method == "POST":
         user_id = request.form.get("user_id")
-        session["user_id"] = user_id
+        session["user_id"] = user_id  # Save user_id to session
         user = (
             get_user_db_connection()
             .execute(
@@ -102,7 +100,9 @@ def cart_view():
         f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT
     )
     cart_response = requests.get(
-        f"{SERVER_URL}/cart", timeout=REQUEST_TIMEOUT
+        f"{SERVER_URL}/cart",
+        json={"user_id": session["user_id"]},
+        timeout=REQUEST_TIMEOUT,
     )
 
     sample_items = items_response.json()
@@ -132,7 +132,11 @@ def add_to_cart(item_id):
     """Adds an item to the cart."""
     response = requests.post(
         f"{SERVER_URL}/cart",
-        json={"item_id": item_id, "action": "add"},
+        json={
+            "user_id": session["user_id"],
+            "item_id": item_id,
+            "action": "add",
+        },
         timeout=REQUEST_TIMEOUT,
     )
     return jsonify(response.json())
@@ -143,7 +147,11 @@ def delete_item(item_id):
     """Deletes an item from the cart."""
     response = requests.post(
         f"{SERVER_URL}/cart",
-        json={"item_id": item_id, "action": "delete"},
+        json={
+            "user_id": session["user_id"],
+            "item_id": item_id,
+            "action": "delete",
+        },
         timeout=REQUEST_TIMEOUT,
     )
     return jsonify(response.json())
@@ -152,23 +160,33 @@ def delete_item(item_id):
 @app.route("/update_cart/<item_id>/<action>", methods=["POST"])
 def update_cart(item_id, action):
     """Updates the cart by increasing or decreasing item quantities."""
-    response = requests.get(
-        f"{SERVER_URL}/cart", timeout=REQUEST_TIMEOUT
-    )
-    cart = response.json()
-
+    user_id = session["user_id"]
     if action == "increase":
         requests.post(
             f"{SERVER_URL}/cart",
-            json={"item_id": item_id, "action": "add"},
+            json={
+                "user_id": user_id,
+                "item_id": item_id,
+                "action": "add",
+            },
             timeout=REQUEST_TIMEOUT,
         )
     elif action == "decrease":
+        # Get the current cart to check the item's quantity
+        cart_response = requests.get(
+            f"{SERVER_URL}/cart",
+            json={"user_id": user_id},
+            timeout=REQUEST_TIMEOUT,
+        )
+        cart = cart_response.json()
+
         quantity = cart.get(item_id, {}).get("quantity", 0)
         if quantity > 1:
+            # Decrease quantity by 1
             requests.post(
                 f"{SERVER_URL}/cart",
                 json={
+                    "user_id": user_id,
                     "item_id": item_id,
                     "quantity": quantity - 1,
                     "action": "update",
@@ -176,19 +194,26 @@ def update_cart(item_id, action):
                 timeout=REQUEST_TIMEOUT,
             )
         elif quantity == 1:
+            # Remove the item if quantity reaches 1
             requests.post(
                 f"{SERVER_URL}/cart",
-                json={"item_id": item_id, "action": "delete"},
+                json={
+                    "user_id": user_id,
+                    "item_id": item_id,
+                    "action": "delete",
+                },
                 timeout=REQUEST_TIMEOUT,
             )
-    return jsonify(cart)
+    return jsonify({"success": True})
 
 
 @app.route("/order_confirmation")
 def order_confirmation():
     """Displays the order confirmation page with items in cart."""
     response = requests.get(
-        f"{SERVER_URL}/cart", timeout=REQUEST_TIMEOUT
+        f"{SERVER_URL}/cart",
+        json={"user_id": session["user_id"]},
+        timeout=REQUEST_TIMEOUT,
     )
     items_in_cart = len(response.json())
     return render_template(
@@ -205,7 +230,11 @@ def place_order():
     user_cursor = user_conn.cursor()
 
     user_id = session.get("user_id")
-    delivery_location = request.form.get("delivery_location")
+    data = request.get_json()  # Retrieve JSON data
+    delivery_location = data.get("delivery_location")
+
+    if not delivery_location:
+        return jsonify({"error": "Delivery location is required"}), 400
 
     user = user_cursor.execute(
         "SELECT cart FROM users WHERE user_id = ?", (user_id,)

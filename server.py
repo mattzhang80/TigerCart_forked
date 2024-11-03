@@ -5,14 +5,12 @@ Serves data for the TigerCart app.
 """
 
 import json
-from flask import Flask, jsonify, request, session
-from config import get_debug_mode
+from flask import Flask, jsonify, request
+from config import get_debug_mode, SECRET_KEY
 from database import get_main_db_connection, get_user_db_connection
 
 app = Flask(__name__)
-app.secret_key = (
-    "your_secret_key"  # Set a secure secret key for sessions
-)
+app.secret_key = SECRET_KEY
 
 
 @app.route("/items", methods=["GET"])
@@ -29,12 +27,12 @@ def get_items():
 
 @app.route("/cart", methods=["GET", "POST"])
 def manage_cart():
-    """Manages the user's cart with retrieval, addition, or update actions."""
-    user_id = session.get("user_id")
+    data = request.json
+    user_id = data.get("user_id")
     conn = get_user_db_connection()
     cursor = conn.cursor()
 
-    # Retrieve the current user's cart from the users table
+    # Retrieve user's cart
     user = cursor.execute(
         "SELECT cart FROM users WHERE user_id = ?", (user_id,)
     ).fetchone()
@@ -42,24 +40,20 @@ def manage_cart():
         conn.close()
         return jsonify({"error": "User not found"}), 404
 
-    # Parse the cart as a dictionary or set it to an empty dictionary
-    try:
-        cart = json.loads(user["cart"]) if user["cart"] else {}
-    except json.JSONDecodeError:
-        cart = {}
+    cart = json.loads(user["cart"]) if user["cart"] else {}
 
     if request.method == "POST":
-        # Update the cart based on the action in the POST request
-        cart_data = request.json
-        item_id = str(
-            cart_data.get("item_id")
-        )  # Convert item_id to string to ensure consistency
-        action = cart_data.get("action")
+        item_id = str(data.get("item_id"))
+        action = data.get("action")
 
-        # Check if the item exists in the inventory
-        item_exists = cursor.execute(
+        # Here, use get_main_db_connection() for the items table
+        item_conn = get_main_db_connection()
+        item_cursor = item_conn.cursor()
+        item_exists = item_cursor.execute(
             "SELECT 1 FROM items WHERE id = ?", (item_id,)
         ).fetchone()
+        item_conn.close()
+
         if not item_exists:
             conn.close()
             return (
@@ -67,7 +61,7 @@ def manage_cart():
                 404,
             )
 
-        # Modify cart structure according to action
+        # Proceed with modifying cart based on action
         if action == "add":
             cart[item_id] = {
                 "quantity": cart.get(item_id, {}).get("quantity", 0) + 1
@@ -75,20 +69,19 @@ def manage_cart():
         elif action == "delete":
             cart.pop(item_id, None)
         elif action == "update":
-            quantity = cart_data.get("quantity")
+            quantity = data.get("quantity", 0)
             if quantity > 0:
                 cart[item_id] = {"quantity": quantity}
             else:
                 cart.pop(item_id, None)
 
-        # Save the updated cart as a JSON string in the database
         cursor.execute(
             "UPDATE users SET cart = ? WHERE user_id = ?",
             (json.dumps(cart), user_id),
         )
         conn.commit()
+        conn.close()
 
-    conn.close()
     return jsonify(cart)
 
 

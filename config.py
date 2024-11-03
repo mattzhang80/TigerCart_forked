@@ -5,6 +5,9 @@ Common files
 """
 
 import os
+import secrets
+
+SECRET_KEY = secrets.token_hex(32)
 
 
 def get_debug_mode():
