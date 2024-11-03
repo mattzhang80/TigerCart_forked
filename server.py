@@ -5,8 +5,8 @@ Serves data for the TigerCart app.
 """
 
 import json
-from config import get_debug_mode
 from flask import Flask, jsonify, request, session
+from config import get_debug_mode
 from database import get_main_db_connection, get_user_db_connection
 
 app = Flask(__name__)
