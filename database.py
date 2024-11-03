@@ -105,11 +105,38 @@ def populate_items(sample_items):
     conn.close()
 
 
+def populate_sample_items():
+    """Populates the items table with predefined sample data."""
+    sample_items = {
+        "1": {"name": "Coke", "price": 1.09, "category": "drinks"},
+        "2": {"name": "Diet Coke", "price": 1.29, "category": "drinks"},
+        "3": {
+            "name": "Tropicana Orange Juice",
+            "price": 0.89,
+            "category": "drinks",
+        },
+        "4": {
+            "name": "Lay’s Potato Chips",
+            "price": 1.59,
+            "category": "food",
+        },
+        "5": {
+            "name": "Snickers Bar",
+            "price": 0.99,
+            "category": "food",
+        },
+        "6": {"name": "Notebook", "price": 2.49, "category": "other"},
+    }
+    populate_items(sample_items)
+    print("Sample items populated.")
+
+
 def populate_users():
     """Populates the users table with initial users."""
     conn = get_user_db_connection()
     cursor = conn.cursor()
 
+    # Add initial users
     users = [
         (1, "Connor"),
         (2, "Jacob"),
@@ -124,3 +151,10 @@ def populate_users():
 
     conn.commit()
     conn.close()
+
+
+if __name__ == "__main__":
+    init_main_db()  # Create the tables if they don't exist
+    init_user_db()  # Create the user table if it doesn't exist
+    populate_sample_items()  # Populate items table with sample data
+    populate_users()  # Populate users table with initial users

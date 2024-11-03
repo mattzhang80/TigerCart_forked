@@ -34,6 +34,7 @@ def manage_cart():
     conn = get_user_db_connection()
     cursor = conn.cursor()
 
+    # Retrieve the current user's cart from the users table
     user = cursor.execute(
         "SELECT cart FROM users WHERE user_id = ?", (user_id,)
     ).fetchone()
@@ -41,16 +42,32 @@ def manage_cart():
         conn.close()
         return jsonify({"error": "User not found"}), 404
 
+    # Parse the cart as a dictionary or set it to an empty dictionary
     try:
         cart = json.loads(user["cart"]) if user["cart"] else {}
     except json.JSONDecodeError:
         cart = {}
 
     if request.method == "POST":
+        # Update the cart based on the action in the POST request
         cart_data = request.json
-        item_id = cart_data.get("item_id")
+        item_id = str(
+            cart_data.get("item_id")
+        )  # Convert item_id to string to ensure consistency
         action = cart_data.get("action")
 
+        # Check if the item exists in the inventory
+        item_exists = cursor.execute(
+            "SELECT 1 FROM items WHERE id = ?", (item_id,)
+        ).fetchone()
+        if not item_exists:
+            conn.close()
+            return (
+                jsonify({"error": "Item not found in inventory"}),
+                404,
+            )
+
+        # Modify cart structure according to action
         if action == "add":
             cart[item_id] = {
                 "quantity": cart.get(item_id, {}).get("quantity", 0) + 1
@@ -64,6 +81,7 @@ def manage_cart():
             else:
                 cart.pop(item_id, None)
 
+        # Save the updated cart as a JSON string in the database
         cursor.execute(
             "UPDATE users SET cart = ? WHERE user_id = ?",
             (json.dumps(cart), user_id),
