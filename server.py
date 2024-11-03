@@ -5,6 +5,7 @@ Serves data for the TigerCart app.
 """
 
 import json
+from config import get_debug_mode
 from flask import Flask, jsonify, request, session
 from database import get_main_db_connection, get_user_db_connection
 
@@ -126,4 +127,4 @@ def get_delivery(delivery_id):
 
 
 if __name__ == "__main__":
-    app.run(port=5150, debug=True)
+    app.run(port=5150, debug=get_debug_mode())
