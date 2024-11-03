@@ -6,6 +6,7 @@ Authors: TigerCart team
 
 from flask import Flask, render_template, redirect, url_for, jsonify
 import requests
+from config import get_debug_mode
 
 app = Flask(__name__)
 
@@ -186,11 +187,4 @@ def delivery_timeline():
 
 
 if __name__ == "__main__":
-    import os
-
-    debug_mode = os.getenv("FLASK_DEBUG", "False").lower() in (
-        "true",
-        "1",
-        "t",
-    )
-    app.run(port=8000, debug=debug_mode)
+    app.run(port=8000, debug=get_debug_mode())

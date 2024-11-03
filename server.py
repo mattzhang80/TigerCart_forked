@@ -4,8 +4,8 @@ server.py
 Serves data for the TigerCart app.
 """
 
-import os
 from flask import Flask, jsonify, request
+from config import get_debug_mode
 
 app = Flask(__name__)
 
@@ -118,9 +118,4 @@ def get_delivery(delivery_id):
 
 
 if __name__ == "__main__":
-    debug_mode = os.getenv("FLASK_DEBUG", "False").lower() in (
-        "true",
-        "1",
-        "t",
-    )
-    app.run(port=5150, debug=debug_mode)
+    app.run(port=5150, debug=get_debug_mode())
