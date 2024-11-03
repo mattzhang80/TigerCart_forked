@@ -63,16 +63,17 @@ def cart_view():
     subtotal = sum(
         details["quantity"] * sample_items[item_id]["price"]
         for item_id, details in cart.items()
+        if item_id in sample_items
     )
-    delivery_fee = round(subtotal * 0.1, 2)
+    delivery_fee = round(subtotal * DELIVERY_FEE_PERCENTAGE, 2)
     total = round(subtotal + delivery_fee, 2)
     return render_template(
         "cart_view.html",
         cart=cart,
         items=sample_items,
-        subtotal=subtotal,
-        delivery_fee=delivery_fee,
-        total=total,
+        subtotal=f"{subtotal:.2f}",
+        delivery_fee=f"{delivery_fee:.2f}",
+        total=f"{total:.2f}",
     )
 
 
