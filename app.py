@@ -10,7 +10,7 @@ import requests
 app = Flask(__name__)
 
 # Define the base URL for the server
-SERVER_URL = "https://localhost:5150"
+SERVER_URL = "http://localhost:5150"
 REQUEST_TIMEOUT = 5  # Timeout in seconds for all requests
 
 
