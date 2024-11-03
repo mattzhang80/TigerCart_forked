@@ -62,9 +62,9 @@ def cart_view():
     cart = cart_response.json()
 
     subtotal = sum(
-        details["quantity"] * sample_items[item_id]["price"]
+        details["quantity"]
+        * sample_items.get(item_id, {}).get("price", 0)
         for item_id, details in cart.items()
-        if item_id in sample_items
     )
     delivery_fee = round(subtotal * DELIVERY_FEE_PERCENTAGE, 2)
     total = round(subtotal + delivery_fee, 2)

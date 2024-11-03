@@ -6,7 +6,8 @@
 <ul>
     {% for item_id, item in items.items() %}
     <li>{{ item.name }} - ${{ item.price }}
-        <button class="add-to-cart" data-item-id="{{ item_id }}">Add to Cart</button>
+        <!-- <button class="add-to-cart" data-item-id="{{ item_id }}">Add to Cart</button> -->
+        <button class="add-to-cart" data-item-id="1">Add to Cart</button>
     </li>
     {% endfor %}
 </ul>

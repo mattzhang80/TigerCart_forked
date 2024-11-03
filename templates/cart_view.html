@@ -5,15 +5,19 @@
 <h1>Your Cart</h1>
 <ul>
     {% for item_id, details in cart.items() %}
-    <li>
-        {{ items[item_id].name }} - ${{ items[item_id].price }}
-        <br>
-        Quantity: {{ details.quantity }}
-        <button onclick="updateQuantity('{{ item_id }}', 'decrease')">-</button>
-        {{ details.quantity }}
-        <button onclick="updateQuantity('{{ item_id }}', 'increase')">+</button>
-        <button class="delete-button" onclick="deleteItem('{{ item_id }}')">Delete</button>
-    </li>
+        {% if item_id in items %}
+        <li>
+            {{ items[item_id].name }} - ${{ items[item_id].price }}
+            <br>
+            Quantity: {{ details.quantity }}
+            <button onclick="updateQuantity('{{ item_id }}', 'decrease')">-</button>
+            {{ details.quantity }}
+            <button onclick="updateQuantity('{{ item_id }}', 'increase')">+</button>
+            <button class="delete-button" onclick="deleteItem('{{ item_id }}')">Delete</button>
+        </li>
+        {% else %}
+        <li>Item not found in inventory.</li>
+        {% endif %}
     {% else %}
     <li>Your cart is empty.</li>
     {% endfor %}
