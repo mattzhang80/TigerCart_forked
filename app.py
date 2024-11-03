@@ -13,7 +13,7 @@ app = Flask(__name__)
 # Define the base URL for the server
 SERVER_URL = "http://localhost:5150"
 REQUEST_TIMEOUT = 5  # Timeout in seconds for all requests
-
+DELIVERY_FEE_PERCENTAGE = 0.1
 
 @app.route("/")
 def home():
@@ -51,29 +51,20 @@ def category_view(category):
 @app.route("/cart_view")
 def cart_view():
     """Render the cart view with current items, subtotal, delivery fee, and total."""
-    items_response = requests.get(
-        f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT
-    )
-    cart_response = requests.get(
-        f"{SERVER_URL}/cart", timeout=REQUEST_TIMEOUT
-    )
+    items_response = requests.get(f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT)
+    cart_response = requests.get(f"{SERVER_URL}/cart", timeout=REQUEST_TIMEOUT)
     sample_items = items_response.json()
     cart = cart_response.json()
 
     subtotal = sum(
         details["quantity"] * sample_items[item_id]["price"]
-        for item_id, details in cart.items()
-        if item_id in sample_items
+        for item_id, details in cart.items() if item_id in sample_items
     )
     delivery_fee = round(subtotal * DELIVERY_FEE_PERCENTAGE, 2)
     total = round(subtotal + delivery_fee, 2)
     return render_template(
-        "cart_view.html",
-        cart=cart,
-        items=sample_items,
-        subtotal=f"{subtotal:.2f}",
-        delivery_fee=f"{delivery_fee:.2f}",
-        total=f"{total:.2f}",
+        "cart_view.html", cart=cart, items=sample_items, 
+        subtotal=subtotal, delivery_fee=delivery_fee, total=total
     )
 
 

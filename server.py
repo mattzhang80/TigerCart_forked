@@ -8,10 +8,7 @@ from flask import Flask, jsonify, request
 from config import get_debug_mode
 
 app = Flask(__name__)
-
-DELIVERY_FEE_PERCENTAGE = (
-    0.1  # Define the same delivery fee as in app.py
-)
+DELIVERY_FEE_PERCENTAGE = 0.1
 
 # Temporary cart and item storage
 cart = {}
