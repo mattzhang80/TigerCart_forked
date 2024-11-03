@@ -89,24 +89,29 @@ function placeOrder(itemsInCart) {
 }
 
 function acceptDelivery(deliveryId) {
-    alert('Delivery accepted');
-    window.location.href = '/timeline'
+    fetch(`/accept_delivery/${deliveryId}`, { method: 'POST' })
+        .then(response => {
+            if (response.ok) {
+                alert('Delivery accepted');
+                window.location.href = '/timeline';  // Redirect to timeline or a different page
+            } else {
+                alert('Failed to accept the delivery');
+            }
+        })
+        .catch(error => console.error('Error accepting delivery:', error));
 }
 
 function declineDelivery(deliveryId) {
-    // Send a POST request to decline the delivery
     fetch(`/decline_delivery/${deliveryId}`, { method: 'POST' })
         .then(response => {
             if (response.ok) {
                 alert('Delivery declined');
-                window.location.href = '/deliver'; // Redirects back to the deliveries page
+                window.location.href = '/deliver';  // Redirect back to deliveries page
             } else {
                 alert('Failed to decline the delivery');
             }
         })
-        .catch(error => {
-            console.error('Error declining delivery:', error);
-        });
+        .catch(error => console.error('Error declining delivery:', error));
 }
 
 function markStepComplete(stepId) {

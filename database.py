@@ -46,17 +46,15 @@ def init_main_db():
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY,
             status TEXT CHECK(status IN ('placed', 'claimed', 'fulfilled', 'cancelled')),
-            time_placed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             user_id INTEGER,
-            items TEXT,
-            prices TEXT,
-            quantities TEXT,
-            delivery_location TEXT
+            total_items INTEGER,
+            cart TEXT,
+            location TEXT
         )
     """
     )
 
-    # Removed the cart table creation from tigercart.sqlite3
     conn.commit()
     conn.close()
 
@@ -80,23 +78,11 @@ def init_user_db():
     conn.close()
 
 
-def populate_items(sample_items):
+def populate_items():
     """Populates the items table with sample data."""
     conn = get_main_db_connection()
     cursor = conn.cursor()
 
-    for item_id, item in sample_items.items():
-        cursor.execute(
-            "INSERT OR IGNORE INTO items (id, name, price, category) VALUES (?, ?, ?, ?)",
-            (item_id, item["name"], item["price"], item["category"]),
-        )
-
-    conn.commit()
-    conn.close()
-
-
-def populate_sample_items():
-    """Populates the items table with predefined sample data."""
     sample_items = {
         "1": {"name": "Coke", "price": 1.09, "category": "drinks"},
         "2": {"name": "Diet Coke", "price": 1.29, "category": "drinks"},
@@ -117,8 +103,16 @@ def populate_sample_items():
         },
         "6": {"name": "Notebook", "price": 2.49, "category": "other"},
     }
-    populate_items(sample_items)
-    print("Sample items populated.")
+
+    for item_id, item in sample_items.items():
+        cursor.execute(
+            "INSERT OR IGNORE INTO items (id, name, price, category) VALUES (?, ?, ?, ?)",
+            (item_id, item["name"], item["price"], item["category"]),
+        )
+
+    conn.commit()
+    conn.close()
+    print("Sample items populated in tigercart.sqlite3.")
 
 
 def populate_users():
@@ -141,10 +135,11 @@ def populate_users():
 
     conn.commit()
     conn.close()
+    print("Users populated in users.sqlite3.")
 
 
 if __name__ == "__main__":
-    init_main_db()  # Create the tables if they don't exist
-    init_user_db()  # Create the user table if it doesn't exist
-    populate_sample_items()  # Populate items table with sample data
+    init_main_db()  # Create tables in the main database
+    init_user_db()  # Create tables in the user database
+    populate_items()  # Populate items table with sample data
     populate_users()  # Populate users table with initial users

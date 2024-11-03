@@ -32,7 +32,7 @@ def login():
     """Login page to authenticate the user."""
     if request.method == "POST":
         user_id = request.form.get("user_id")
-        session["user_id"] = user_id  # Save user_id to session
+        session["user_id"] = user_id
         user = (
             get_user_db_connection()
             .execute(
@@ -230,7 +230,7 @@ def place_order():
     user_cursor = user_conn.cursor()
 
     user_id = session.get("user_id")
-    data = request.get_json()  # Retrieve JSON data
+    data = request.get_json()
     delivery_location = data.get("delivery_location")
 
     if not delivery_location:
@@ -244,33 +244,23 @@ def place_order():
     if not cart:
         return jsonify({"error": "Cart is empty"}), 400
 
-    items = ",".join(cart.keys())
-    quantities = ",".join(
-        str(details["quantity"]) for details in cart.values()
-    )
-    prices = ",".join(
-        str(
-            cursor.execute(
-                "SELECT price FROM items WHERE id = ?", (item_id,)
-            ).fetchone()["price"]
-        )
-        for item_id in cart
-    )
+    total_items = sum(details["quantity"] for details in cart.values())
 
+    # Insert the delivery information into the orders table
     cursor.execute(
         """INSERT INTO orders
-        (status, user_id, items, prices, quantities, delivery_location)
-        VALUES (?, ?, ?, ?, ?, ?)""",
+        (status, user_id, total_items, cart, location)
+        VALUES (?, ?, ?, ?, ?)""",
         (
             "placed",
             user_id,
-            items,
-            prices,
-            quantities,
+            total_items,
+            json.dumps(cart),
             delivery_location,
         ),
     )
 
+    # Clear the user's cart after placing the order
     user_cursor.execute(
         "UPDATE users SET cart = '{}' WHERE user_id = ?", (user_id,)
     )
