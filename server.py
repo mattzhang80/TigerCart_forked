@@ -4,9 +4,14 @@ server.py
 Serves data for the TigerCart app.
 """
 
+import os
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+
+DELIVERY_FEE_PERCENTAGE = (
+    0.1  # Define the same delivery fee as in app.py
+)
 
 # Temporary cart and item storage
 cart = {}
@@ -33,7 +38,6 @@ deliveries = {
         "id": "1",
         "item_count": 5,
         "location": "Firestone Library, B-Floor",
-        "earnings": 1.61,
         "delivery_items": [
             {"name": "Diet Coke", "price": 1.28, "quantity": 2},
             {
@@ -47,7 +51,6 @@ deliveries = {
         "id": "2",
         "item_count": 1,
         "location": "Friend Center 001",
-        "earnings": 0.05,
         "delivery_items": [
             {"name": "Coke", "price": 1.09, "quantity": 1}
         ],
@@ -56,7 +59,6 @@ deliveries = {
         "id": "3",
         "item_count": 20,
         "location": "Stadium Drive Garage",
-        "earnings": 7.89,
         "delivery_items": [
             {"name": "Notebook", "price": 2.49, "quantity": 8},
             {"name": "Snickers Bar", "price": 0.99, "quantity": 12},
@@ -107,14 +109,15 @@ def get_delivery(delivery_id):
             item["price"] * item["quantity"]
             for item in delivery["delivery_items"]
         )
-        delivery["total"] = round(total, 2)
+        delivery["total"] = f"{total:.2f}"
+        delivery["earnings"] = (
+            f"{(total * DELIVERY_FEE_PERCENTAGE):.2f}"
+        )
         return jsonify(delivery)
     return jsonify({"error": "Delivery not found"}), 404
 
 
 if __name__ == "__main__":
-    import os
-
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() in (
         "true",
         "1",
