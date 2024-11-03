@@ -49,8 +49,19 @@ function acceptDelivery(deliveryId) {
 }
 
 function declineDelivery(deliveryId) {
-    alert('Delivery declined');
-    window.location.href = '/deliver'; // Redirects back to the deliveries page
+    // Send a POST request to decline the delivery
+    fetch(`/decline_delivery/${deliveryId}`, { method: 'POST' })
+        .then(response => {
+            if (response.ok) {
+                alert('Delivery declined');
+                window.location.href = '/deliver'; // Redirects back to the deliveries page
+            } else {
+                alert('Failed to decline the delivery');
+            }
+        })
+        .catch(error => {
+            console.error('Error declining delivery:', error);
+        });
 }
 
 function markStepComplete(stepId) {

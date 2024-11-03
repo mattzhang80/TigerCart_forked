@@ -28,32 +28,84 @@
             position: fixed;
             top: 10px;
             left: 10px;
-            width: 60px; 
+            width: 60px;
             height: 60px;
             background: rgba(255, 255, 255, 0.8);
-            border-radius: 50%; 
-            display: flex; 
+            border-radius: 50%;
+            display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        
+
         .back-arrow img {
+            display: block;
+        }
+        /* Logo and profile dropdown */
+        .top-right {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .profile {
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .profile-icon {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 30px;
+            right: 0;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            width: 120px;
+            padding: 10px;
+        }
+
+        .dropdown a {
+            text-decoration: none;
+            color: #333;
+            padding: 8px 12px;
+            display: block;
+        }
+
+        .dropdown a:hover {
+            background-color: #f0f0f0;
+        }
+
+        .profile.open .dropdown {
             display: block;
         }
 
         .circle {
-            width: 50px; /* Adjust size as needed */
-            height: 50px; /* Same as width to ensure it's a circle */
-            border-radius: 50%; /* Makes the div a circle */
-            background-color: gray; /* Optional: gives the circle a background color */
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: gray;
         }
 
         .circle.complete {
-            background-color: green; /* Change color when complete */
+            background-color: green;
         }
-
 
         /* Center content and add top margin */
         .content-wrapper {
@@ -65,11 +117,10 @@
             margin-top: 40px;
             align-items: flex-start;
             min-width: 300px;
-            width: 60%; /* ADJUST THIS FOR CLEANER LOOK??? */
-            max-width: 800px; 
+            width: 60%;
+            max-width: 800px;
         }
 
-        /* Center list items and remove bullets */
         .content-wrapper ul {
             list-style-type: none;
             padding: 0;
@@ -93,7 +144,7 @@
         }
 
         .content-wrapper button.delete-button {
-            background-color: #dc3545; /* Red color */
+            background-color: #dc3545;
             color: white;
         }
 
@@ -103,8 +154,8 @@
 
         .content-wrapper button:hover, .content-wrapper a:hover {
             background-color: #0056b3;
-            transform: translateY(-2px); /* Button animation that rises*/
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Shadow on hover*/
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         }
 
         /* Adjust headings */
@@ -112,7 +163,6 @@
             margin-bottom: 20px;
         }
 
-        /* Optional: Adjust paragraphs */
         .content-wrapper p {
             margin-bottom: 20px;
         }
@@ -128,11 +178,11 @@
         .step:not(:last-child)::after {
             content: '';
             position: absolute;
-            left: 30px; /* Center line with circles */
-            top: 50px; /* Adjust to match the circle size */
-            height: 50px; /* Height of the line */
-            width: 2px; /* Thickness of the line */
-            background-color: gray; /* Change color for completed steps */
+            left: 30px;
+            top: 50px;
+            height: 50px;
+            width: 2px;
+            background-color: gray;
         }
 
         .step-text {
@@ -147,6 +197,34 @@
             position: relative;
             justify-content: center;
         }
+
+        /* GitHub button styling */
+        .github-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+
+        .github-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
     </style>
 </head>
 <!-- Google tag (gtag.js) -->
@@ -158,6 +236,7 @@
     gtag('config', 'G-L7JXSY2NBE');
 </script>
 <body>
+    <!-- Top-left back button -->
     {% if request.endpoint != 'home' %}
     <a href="#" onclick="goBack()" class="back-arrow">
         <svg width="24" height="24" viewBox="0 0 24 24">
@@ -166,6 +245,21 @@
     </a>
     {% endif %}
 
+    <!-- Top-right logo and profile menu with user's name -->
+    <div class="top-right">
+        <!-- Display the logged-in user's name -->
+        <div class="user-name">{{ session.get("user_name", "Guest") }}</div>
+
+        <!-- Profile icon with dropdown -->
+        <div class="profile" onclick="toggleDropdown()">
+            <i class="fas fa-user-circle profile-icon"></i>
+            <div class="dropdown">
+                <a href="#" onclick="logoutUser()">Log Out</a>
+                <a href="#" onclick="logoutUser()">Profile</a>
+                <a href="#" onclick="logoutUser()">Settings</a>
+            </div>
+        </div>
+    </div>
 
     <div class="content-wrapper">
         {% block content %}
@@ -173,7 +267,40 @@
         {% endblock %}
     </div>
 
-    <!-- Include common scripts -->
+    <!-- Footer with GitHub button -->
+    <div class="footer">
+        <a href="https://github.com/conjfrnk/tigercart" class="github-button" target="_blank">
+            <i class="fab fa-github"></i>
+            conjfrnk/TigerCart
+        </a>
+    </div>
+
+    <script>
+        function toggleDropdown() {
+            const profileMenu = document.querySelector('.profile');
+            profileMenu.classList.toggle('open');
+        }
+
+        function logoutUser() {
+            // Set the user session to None (logout simulation)
+            fetch('/logout', { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = "{{ url_for('login') }}";  // Redirect to login page
+                    }
+                });
+        }
+
+        // Close the dropdown if clicked outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.profile-icon') && !event.target.closest('.profile')) {
+                const profileMenu = document.querySelector('.profile');
+                if (profileMenu.classList.contains('open')) {
+                    profileMenu.classList.remove('open');
+                }
+            }
+        }
+    </script>
     <script>
         function goBack() {
             if (document.referrer && document.referrer.includes(window.location.hostname)) {
@@ -183,6 +310,7 @@
             }
         }
     </script>
+    <!-- Include common scripts -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

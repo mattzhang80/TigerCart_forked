@@ -6,7 +6,7 @@
 <ul>
     {% for delivery in deliveries %}
     <li>
-        {{ delivery.item_count }} items to {{ delivery.location }} - Earnings: ${{ "%.2f"|format(delivery.earnings) }}
+        {{ delivery.item_count }} items for {{ delivery.user_name }} to {{ delivery.location }} - Earnings: ${{ "%.2f"|format(delivery.earnings) }}
         <a href="{{ url_for('delivery_details', delivery_id=delivery.id) }}">See More</a>
     </li>
     {% endfor %}

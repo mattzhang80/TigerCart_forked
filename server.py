@@ -4,136 +4,128 @@ server.py
 Serves data for the TigerCart app.
 """
 
-from flask import Flask, jsonify, request
-from config import get_debug_mode
+from flask import Flask, jsonify, request, session
+import json
+from database import get_main_db_connection, get_user_db_connection
 
 app = Flask(__name__)
-DELIVERY_FEE_PERCENTAGE = 0.1
-
-# Temporary cart and item storage
-cart = {}
-sample_items = {
-    "1": {"name": "Coke", "price": 1.09, "category": "drinks"},
-    "2": {"name": "Diet Coke", "price": 1.29, "category": "drinks"},
-    "3": {
-        "name": "Tropicana Orange Juice",
-        "price": 0.89,
-        "category": "drinks",
-    },
-    "4": {
-        "name": "Lay’s Potato Chips",
-        "price": 1.59,
-        "category": "food",
-    },
-    "5": {"name": "Snickers Bar", "price": 0.99, "category": "food"},
-    "6": {"name": "Notebook", "price": 2.49, "category": "other"},
-}
-
-# Sample delivery data
-deliveries = {
-    "1": {
-        "id": "1",
-        "item_count": 3,
-        "location": "Firestone Library, B-Floor",
-        "delivery_items": [
-            {"name": "Diet Coke", "price": 1.28, "quantity": 2},
-            {
-                "name": "Lay’s Potato Chips",
-                "price": 1.59,
-                "quantity": 1,
-            },
-        ],
-    },
-    "2": {
-        "id": "2",
-        "item_count": 1,
-        "location": "Friend Center 001",
-        "delivery_items": [
-            {"name": "Coke", "price": 1.09, "quantity": 1}
-        ],
-    },
-    "3": {
-        "id": "3",
-        "item_count": 20,
-        "location": "Stadium Drive Garage",
-        "delivery_items": [
-            {"name": "Notebook", "price": 2.49, "quantity": 8},
-            {"name": "Snickers Bar", "price": 0.99, "quantity": 12},
-        ],
-    },
-}
+app.secret_key = (
+    "your_secret_key"  # Set a secure secret key for sessions
+)
 
 
 @app.route("/items", methods=["GET"])
 def get_items():
-    """Return the sample items."""
-    return jsonify(sample_items)
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+    items = cursor.execute("SELECT * FROM items").fetchall()
+    conn.close()
+
+    # Convert each Row object to a dictionary
+    items_dict = {str(item["id"]): dict(item) for item in items}
+    return jsonify(items_dict)
 
 
 @app.route("/cart", methods=["GET", "POST"])
 def manage_cart():
-    """Return or update the cart data."""
+    user_id = session.get("user_id")
+    conn = get_user_db_connection()
+    cursor = conn.cursor()
+
+    # Retrieve the current user's cart from the users table
+    user = cursor.execute(
+        "SELECT cart FROM users WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    if user is None:
+        conn.close()
+        return jsonify({"error": "User not found"}), 404
+
+    # Parse the cart as a dictionary or set it to an empty dictionary
+    try:
+        cart = json.loads(user["cart"]) if user["cart"] else {}
+    except json.JSONDecodeError:
+        cart = {}
+
     if request.method == "POST":
+        # Update the cart based on the action in the POST request
         cart_data = request.json
         item_id = cart_data.get("item_id")
         action = cart_data.get("action")
 
+        # Modify cart structure according to action
         if action == "add":
-            # Initialize or increment quantity
-            if item_id in cart:
-                cart[item_id]["quantity"] += 1
-            else:
-                cart[item_id] = {"quantity": 1}
-        elif action == "delete" and item_id in cart:
+            cart[item_id] = {
+                "quantity": cart.get(item_id, {}).get("quantity", 0) + 1
+            }
+        elif action == "delete":
             cart.pop(item_id, None)
         elif action == "update":
             quantity = cart_data.get("quantity")
-            cart[item_id] = {"quantity": quantity}
+            if quantity > 0:
+                cart[item_id] = {"quantity": quantity}
+            else:
+                cart.pop(item_id, None)
 
-        return jsonify(cart)
+        # Save the updated cart as a JSON string in the database
+        cursor.execute(
+            "UPDATE users SET cart = ? WHERE user_id = ?",
+            (json.dumps(cart), user_id),
+        )
+        conn.commit()
 
-    # On GET request, just return the current cart
+    conn.close()
     return jsonify(cart)
 
 
 @app.route("/deliveries", methods=["GET"])
 def get_deliveries():
-    """Return all available deliveries with dynamic earnings only."""
-    deliveries_with_earnings = {}
-    for delivery_id, delivery in deliveries.items():
-        # Calculate subtotal and earnings
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+    orders = cursor.execute(
+        "SELECT * FROM orders WHERE status = 'placed'"
+    ).fetchall()
+    deliveries = {}
+    for order in orders:
         subtotal = sum(
-            item["price"] * item["quantity"]
-            for item in delivery["delivery_items"]
+            int(quantity) * float(price)
+            for quantity, price in zip(
+                order["quantities"].split(","),
+                order["prices"].split(","),
+            )
         )
-        earnings = round(subtotal * DELIVERY_FEE_PERCENTAGE, 2)
-
-        # Add calculated earnings to each delivery
-        deliveries_with_earnings[delivery_id] = {
-            **delivery,
+        earnings = round(subtotal * 0.1, 2)
+        deliveries[str(order["id"])] = {
+            **dict(order),
             "subtotal": round(subtotal, 2),
             "earnings": earnings,
         }
-
-    return jsonify(deliveries_with_earnings)
+    conn.close()
+    return jsonify(deliveries)
 
 
 @app.route("/delivery/<delivery_id>", methods=["GET"])
 def get_delivery(delivery_id):
-    """Return details of a specific delivery by ID, with calculated totals."""
-    delivery = deliveries.get(delivery_id)
-    if delivery:
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+    order = cursor.execute(
+        "SELECT * FROM orders WHERE id = ?", (delivery_id,)
+    ).fetchone()
+    if order:
         total = sum(
-            item["price"] * item["quantity"]
-            for item in delivery["delivery_items"]
+            int(quantity) * float(price)
+            for quantity, price in zip(
+                order["quantities"].split(","),
+                order["prices"].split(","),
+            )
         )
-        delivery["total"] = f"{total:.2f}"
-        delivery["earnings"] = (
-            f"{(total * DELIVERY_FEE_PERCENTAGE):.2f}"
-        )
-        return jsonify(delivery)
+        order_dict = dict(order)
+        order_dict["total"] = f"{total:.2f}"
+        order_dict["earnings"] = f"{(total * 0.1):.2f}"
+        conn.close()
+        return jsonify(order_dict)
+    conn.close()
     return jsonify({"error": "Delivery not found"}), 404
 
 
 if __name__ == "__main__":
-    app.run(port=5150, debug=get_debug_mode())
+    app.run(port=5150, debug=True)

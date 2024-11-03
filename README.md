@@ -19,9 +19,9 @@
 - [X] Server
 - [ ] Database of orders (marked as: placed, claimed, fulfilled, cancelled; contains: time placed, items, prices, quantities, person who placed the order)
 - [ ] Real orders, not placeholders
-- [ ] Database of items
+- [X] Database of items
 - [ ] Real items, not placeholders
-- [ ] Database of users
+- [X] Database of users
 - [ ] Real users, not placeholders
 - [ ] More style
 - [ ] Live U-Store data
