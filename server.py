@@ -79,8 +79,11 @@ def manage_cart():
         action = cart_data.get("action")
 
         if action == "add":
-            cart[item_id] = cart.get(item_id, {"quantity": 0})
-            cart[item_id]["quantity"] += 1
+            # Initialize or increment quantity
+            if item_id in cart:
+                cart[item_id]["quantity"] += 1
+            else:
+                cart[item_id] = {"quantity": 1}
         elif action == "delete" and item_id in cart:
             cart.pop(item_id, None)
         elif action == "update":
@@ -88,6 +91,8 @@ def manage_cart():
             cart[item_id] = {"quantity": quantity}
 
         return jsonify(cart)
+
+    # On GET request, just return the current cart
     return jsonify(cart)
 
 

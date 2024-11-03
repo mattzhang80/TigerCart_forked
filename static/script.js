@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Event delegation for dynamically added buttons
     document.body.addEventListener('click', function(event) {
         if (event.target.classList.contains('add-to-cart')) {
             const itemId = event.target.getAttribute('data-item-id');
