@@ -27,6 +27,7 @@ def get_items():
 
 @app.route("/cart", methods=["GET", "POST"])
 def manage_cart():
+    """Logic to add/remove items and change quantities"""
     data = request.json
     user_id = data.get("user_id")
     conn = get_user_db_connection()
