@@ -33,7 +33,7 @@ sample_items = {
 deliveries = {
     "1": {
         "id": "1",
-        "item_count": 5,
+        "item_count": 3,
         "location": "Firestone Library, B-Floor",
         "delivery_items": [
             {"name": "Diet Coke", "price": 1.28, "quantity": 2},
@@ -98,8 +98,24 @@ def manage_cart():
 
 @app.route("/deliveries", methods=["GET"])
 def get_deliveries():
-    """Return all available deliveries."""
-    return jsonify(deliveries)
+    """Return all available deliveries with dynamic earnings only."""
+    deliveries_with_earnings = {}
+    for delivery_id, delivery in deliveries.items():
+        # Calculate subtotal and earnings
+        subtotal = sum(
+            item["price"] * item["quantity"]
+            for item in delivery["delivery_items"]
+        )
+        earnings = round(subtotal * DELIVERY_FEE_PERCENTAGE, 2)
+
+        # Add calculated earnings to each delivery
+        deliveries_with_earnings[delivery_id] = {
+            **delivery,
+            "subtotal": round(subtotal, 2),
+            "earnings": earnings,
+        }
+
+    return jsonify(deliveries_with_earnings)
 
 
 @app.route("/delivery/<delivery_id>", methods=["GET"])
