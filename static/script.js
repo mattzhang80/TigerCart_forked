@@ -51,6 +51,7 @@ function acceptDelivery(deliveryId) {
 
 function declineDelivery(deliveryId) {
     alert('Delivery declined');
+    window.location.href = '/deliver'; // Redirects back to the deliveries page
 }
 
 function markStepComplete(stepId) {
