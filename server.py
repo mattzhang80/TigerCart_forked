@@ -92,19 +92,38 @@ def get_deliveries():
     conn = get_main_db_connection()
     cursor = conn.cursor()
     orders = cursor.execute(
-        """"SELECT id, timestamp, user_id,
+        """SELECT id, timestamp, user_id,
         total_items, cart, location
         FROM orders WHERE status = 'placed'"""
     ).fetchall()
 
     deliveries = {}
     for order in orders:
-        # Load cart items from JSON and calculate the subtotal
+        # Load cart items from JSON
         cart = json.loads(order["cart"])
-        subtotal = sum(
-            item["quantity"] * item.get("price", 0)
-            for item in cart.values()
-        )
+        # Get list of item_ids
+        item_ids = list(cart.keys())
+
+        # Fetch item details from items table
+        if item_ids:
+            placeholders = ','.join(['?'] * len(item_ids))
+            cursor.execute(
+                f"SELECT id, price FROM items WHERE id IN ({placeholders})",
+                item_ids
+            )
+            items = cursor.fetchall()
+            # Build a dict of item_id to price
+            item_prices = {str(item['id']): item['price'] for item in items}
+        else:
+            item_prices = {}
+
+        # Calculate subtotal
+        subtotal = 0
+        for item_id, item_info in cart.items():
+            quantity = item_info.get('quantity', 0)
+            price = item_prices.get(item_id, 0)
+            subtotal += quantity * price
+
         earnings = round(subtotal * 0.1, 2)  # Calculate 10% earnings
 
         deliveries[str(order["id"])] = {
@@ -114,10 +133,12 @@ def get_deliveries():
             "total_items": order["total_items"],
             "cart": cart,
             "location": order["location"],
-            "earnings": earnings,  # Include earnings in the delivery dictionary
+            "earnings": earnings,
         }
     conn.close()
     return jsonify(deliveries)
+
+
 
 
 @app.route("/delivery/<delivery_id>", methods=["GET"])
@@ -190,8 +211,7 @@ def accept_delivery(delivery_id):
     )
     conn.commit()
     conn.close()
-    return jsonify({"success": True}), 200
-
+    return jsonify({"success": True}), 200  # Return a JSON response
 
 @app.route("/decline_delivery/<delivery_id>", methods=["POST"])
 def decline_delivery(delivery_id):
@@ -202,7 +222,8 @@ def decline_delivery(delivery_id):
     cursor.execute("DELETE FROM orders WHERE id = ?", (delivery_id,))
     conn.commit()
     conn.close()
-    return jsonify({"success": True}), 200
+    return jsonify({"success": True}), 200  # Return a JSON response
+
 
 
 if __name__ == "__main__":

@@ -297,11 +297,46 @@ def delivery_details(delivery_id):
         )
     return "Delivery not found", 404
 
+@app.route("/accept_delivery/<delivery_id>", methods=["POST"])
+def accept_delivery(delivery_id):
+    """Accepts a delivery by forwarding the request to the backend server."""
+    response = requests.post(
+        f"{SERVER_URL}/accept_delivery/{delivery_id}",
+        timeout=REQUEST_TIMEOUT,
+    )
+    if response.status_code == 200:
+        # Redirect to the delivery timeline or confirmation page
+        return redirect(url_for('delivery_timeline', delivery_id=delivery_id))
+    else:
+        return "Error accepting delivery", response.status_code
 
-@app.route("/timeline")
-def delivery_timeline():
-    """Displays a timeline for delivery activities."""
-    return render_template("deliverer_timeline.html")
+@app.route("/decline_delivery/<delivery_id>", methods=["POST"])
+def decline_delivery(delivery_id):
+    """Declines a delivery by forwarding the request to the backend server."""
+    response = requests.post(
+        f"{SERVER_URL}/decline_delivery/{delivery_id}",
+        timeout=REQUEST_TIMEOUT,
+    )
+    if response.status_code == 200:
+        return redirect(url_for('deliver'))
+    else:
+        return "Error declining delivery", response.status_code
+
+
+@app.route("/delivery_timeline/<delivery_id>")
+def delivery_timeline(delivery_id):
+    """Displays a timeline for the accepted delivery."""
+    # Fetch necessary data for the delivery timeline
+    response = requests.get(
+        f"{SERVER_URL}/delivery/{delivery_id}",
+        timeout=REQUEST_TIMEOUT,
+    )
+    if response.status_code == 200:
+        delivery = response.json()
+        return render_template("deliverer_timeline.html", delivery=delivery)
+    else:
+        return "Delivery not found", 404
+
 
 
 if __name__ == "__main__":
