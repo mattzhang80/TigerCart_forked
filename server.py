@@ -166,8 +166,6 @@ def get_deliveries():
     return jsonify(deliveries)
 
 
-
-
 @app.route("/delivery/<delivery_id>", methods=["GET"])
 def get_delivery(delivery_id):
     """Fetches and returns details of a specific delivery."""
@@ -240,6 +238,7 @@ def accept_delivery(delivery_id):
     conn.close()
     return jsonify({"success": True}), 200  # Return a JSON response
 
+
 @app.route("/decline_delivery/<delivery_id>", methods=["POST"])
 def decline_delivery(delivery_id):
     """Declines the delivery by deleting the order."""
@@ -250,7 +249,6 @@ def decline_delivery(delivery_id):
     conn.commit()
     conn.close()
     return jsonify({"success": True}), 200  # Return a JSON response
-
 
 
 if __name__ == "__main__":
