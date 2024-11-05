@@ -307,8 +307,7 @@ def accept_delivery(delivery_id):
     if response.status_code == 200:
         # Redirect to the delivery timeline or confirmation page
         return redirect(url_for('delivery_timeline', delivery_id=delivery_id))
-    else:
-        return "Error accepting delivery", response.status_code
+    return "Error accepting delivery", response.status_code
 
 @app.route("/decline_delivery/<delivery_id>", methods=["POST"])
 def decline_delivery(delivery_id):
@@ -319,8 +318,7 @@ def decline_delivery(delivery_id):
     )
     if response.status_code == 200:
         return redirect(url_for('deliver'))
-    else:
-        return "Error declining delivery", response.status_code
+    return "Error declining delivery", response.status_code
 
 
 @app.route("/delivery_timeline/<delivery_id>")
@@ -334,8 +332,7 @@ def delivery_timeline(delivery_id):
     if response.status_code == 200:
         delivery = response.json()
         return render_template("deliverer_timeline.html", delivery=delivery)
-    else:
-        return "Delivery not found", 404
+    return "Delivery not found", 404
 
 
 
