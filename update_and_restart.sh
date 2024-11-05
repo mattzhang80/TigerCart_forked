@@ -19,7 +19,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     echo "Restarting Gunicorn for app and server..."
     doas /usr/bin/pkill -f "gunicorn --bind 127.0.0.1:8000"
     doas /usr/bin/pkill -f "gunicorn --bind 127.0.0.1:5150"
-    sleep 5
+    sleep 10
     . tigercart_env/bin/activate
 
     # Restart server.py on port 5150
