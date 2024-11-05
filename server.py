@@ -86,43 +86,65 @@ def manage_cart():
     return jsonify(cart)
 
 
+def fetch_user_name(user_id, cursor_users):
+    """Fetches the user name for a given user_id from the users database."""
+    user = cursor_users.execute(
+        "SELECT name FROM users WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    return user["name"] if user else "Unknown User"
+
+
+def fetch_detailed_cart(cart, cursor_orders):
+    """Fetches detailed item information for each item in the cart."""
+    detailed_cart = {}
+    subtotal = 0
+
+    for item_id, item_info in cart.items():
+        item_data = cursor_orders.execute(
+            "SELECT name, price FROM items WHERE id = ?", (item_id,)
+        ).fetchone()
+        if item_data:
+            item_price = item_data["price"]
+            quantity = item_info["quantity"]
+            item_total = quantity * item_price
+            subtotal += item_total
+
+            detailed_cart[item_id] = {
+                "name": item_data["name"],
+                "price": item_price,
+                "quantity": quantity,
+                "total": item_total,
+            }
+
+    return detailed_cart, subtotal
+
+
 @app.route("/deliveries", methods=["GET"])
 def get_deliveries():
-    """Fetches and returns all deliveries with their details and earnings."""
-    conn = get_main_db_connection()
-    cursor = conn.cursor()
-    orders = cursor.execute(
-        """SELECT id, timestamp, user_id,
-        total_items, cart, location
-        FROM orders WHERE status = 'placed'"""
+    """Fetches and returns all deliveries with user names, item details, and earnings."""
+    conn_orders = get_main_db_connection()
+    cursor_orders = conn_orders.cursor()
+    conn_users = get_user_db_connection()
+    cursor_users = conn_users.cursor()
+
+    orders = cursor_orders.execute(
+        """
+        SELECT id, timestamp, user_id, total_items, cart, location
+        FROM orders
+        WHERE status = 'placed'
+        """
     ).fetchall()
 
     deliveries = {}
+
     for order in orders:
-        # Load cart items from JSON
+        user_name = fetch_user_name(order["user_id"], cursor_users)
+
+        # Load and fetch detailed item information for each cart item
         cart = json.loads(order["cart"])
-        # Get list of item_ids
-        item_ids = list(cart.keys())
-
-        # Fetch item details from items table
-        if item_ids:
-            placeholders = ','.join(['?'] * len(item_ids))
-            cursor.execute(
-                f"SELECT id, price FROM items WHERE id IN ({placeholders})",
-                item_ids
-            )
-            items = cursor.fetchall()
-            # Build a dict of item_id to price
-            item_prices = {str(item['id']): item['price'] for item in items}
-        else:
-            item_prices = {}
-
-        # Calculate subtotal
-        subtotal = 0
-        for item_id, item_info in cart.items():
-            quantity = item_info.get('quantity', 0)
-            price = item_prices.get(item_id, 0)
-            subtotal += quantity * price
+        detailed_cart, subtotal = fetch_detailed_cart(
+            cart, cursor_orders
+        )
 
         earnings = round(subtotal * 0.1, 2)  # Calculate 10% earnings
 
@@ -130,12 +152,17 @@ def get_deliveries():
             "id": order["id"],
             "timestamp": order["timestamp"],
             "user_id": order["user_id"],
+            "user_name": user_name,
             "total_items": order["total_items"],
-            "cart": cart,
+            "cart": detailed_cart,
             "location": order["location"],
+            "subtotal": round(subtotal, 2),
             "earnings": earnings,
         }
-    conn.close()
+
+    conn_orders.close()
+    conn_users.close()
+
     return jsonify(deliveries)
 
 

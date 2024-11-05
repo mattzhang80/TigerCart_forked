@@ -17,8 +17,8 @@
 - [X] GitHub Actions CodeQL and pylint
 - [X] Website Live
 - [X] Server
-- [ ] Database of orders (marked as: placed, claimed, fulfilled, cancelled; contains: time placed, items, prices, quantities, person who placed the order)
-- [ ] Real orders, not placeholders
+- [X] Database of orders (marked as: placed, claimed, fulfilled, cancelled; contains: time placed, items, prices, quantities, person who placed the order)
+- [X] Real orders, not placeholders
 - [X] Database of items
 - [ ] Real items, not placeholders
 - [X] Database of users
