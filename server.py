@@ -86,14 +86,47 @@ def manage_cart():
     return jsonify(cart)
 
 
+def fetch_user_name(user_id, cursor_users):
+    """Fetches the user name for a given user_id from the users database."""
+    user = cursor_users.execute(
+        "SELECT name FROM users WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    return user["name"] if user else "Unknown User"
+
+
+def fetch_detailed_cart(cart, cursor_orders):
+    """Fetches detailed item information for each item in the cart."""
+    detailed_cart = {}
+    subtotal = 0
+
+    for item_id, item_info in cart.items():
+        item_data = cursor_orders.execute(
+            "SELECT name, price FROM items WHERE id = ?", (item_id,)
+        ).fetchone()
+        if item_data:
+            item_price = item_data["price"]
+            quantity = item_info["quantity"]
+            item_total = quantity * item_price
+            subtotal += item_total
+
+            detailed_cart[item_id] = {
+                "name": item_data["name"],
+                "price": item_price,
+                "quantity": quantity,
+                "total": item_total,
+            }
+
+    return detailed_cart, subtotal
+
+
 @app.route("/deliveries", methods=["GET"])
 def get_deliveries():
     """Fetches and returns all deliveries with user names, item details, and earnings."""
-    # Connect to the main database to fetch orders and item details
     conn_orders = get_main_db_connection()
     cursor_orders = conn_orders.cursor()
+    conn_users = get_user_db_connection()
+    cursor_users = conn_users.cursor()
 
-    # Fetch orders with 'placed' status
     orders = cursor_orders.execute(
         """
         SELECT id, timestamp, user_id, total_items, cart, location
@@ -104,40 +137,14 @@ def get_deliveries():
 
     deliveries = {}
 
-    # Connect to the user database to fetch user names
-    conn_users = get_user_db_connection()
-    cursor_users = conn_users.cursor()
-
     for order in orders:
-        # Fetch the user's name from the user database
-        user = cursor_users.execute(
-            "SELECT name FROM users WHERE user_id = ?",
-            (order["user_id"],),
-        ).fetchone()
-        user_name = user["name"] if user else "Unknown User"
+        user_name = fetch_user_name(order["user_id"], cursor_users)
 
-        # Load cart items from JSON and retrieve item details from the items table
+        # Load and fetch detailed item information for each cart item
         cart = json.loads(order["cart"])
-        detailed_cart = {}
-        subtotal = 0
-
-        for item_id, item_info in cart.items():
-            item_data = cursor_orders.execute(
-                "SELECT name, price FROM items WHERE id = ?", (item_id,)
-            ).fetchone()
-            if item_data:
-                item_price = item_data["price"]
-                quantity = item_info["quantity"]
-                item_total = quantity * item_price
-                subtotal += item_total
-
-                # Update the cart with full item details
-                detailed_cart[item_id] = {
-                    "name": item_data["name"],
-                    "price": item_price,
-                    "quantity": quantity,
-                    "total": item_total,
-                }
+        detailed_cart, subtotal = fetch_detailed_cart(
+            cart, cursor_orders
+        )
 
         earnings = round(subtotal * 0.1, 2)  # Calculate 10% earnings
 
@@ -145,15 +152,14 @@ def get_deliveries():
             "id": order["id"],
             "timestamp": order["timestamp"],
             "user_id": order["user_id"],
-            "user_name": user_name,  # Add user's name to the delivery details
+            "user_name": user_name,
             "total_items": order["total_items"],
-            "cart": detailed_cart,  # Use the detailed cart with item names and prices
+            "cart": detailed_cart,
             "location": order["location"],
             "subtotal": round(subtotal, 2),
             "earnings": earnings,
         }
 
-    # Close both database connections
     conn_orders.close()
     conn_users.close()
 
