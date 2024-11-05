@@ -88,35 +88,75 @@ def manage_cart():
 
 @app.route("/deliveries", methods=["GET"])
 def get_deliveries():
-    """Fetches and returns all deliveries with their details and earnings."""
-    conn = get_main_db_connection()
-    cursor = conn.cursor()
-    orders = cursor.execute(
-        """"SELECT id, timestamp, user_id,
-        total_items, cart, location
-        FROM orders WHERE status = 'placed'"""
+    """Fetches and returns all deliveries with user names, item details, and earnings."""
+    # Connect to the main database to fetch orders and item details
+    conn_orders = get_main_db_connection()
+    cursor_orders = conn_orders.cursor()
+
+    # Fetch orders with 'placed' status
+    orders = cursor_orders.execute(
+        """
+        SELECT id, timestamp, user_id, total_items, cart, location
+        FROM orders
+        WHERE status = 'placed'
+        """
     ).fetchall()
 
     deliveries = {}
+
+    # Connect to the user database to fetch user names
+    conn_users = get_user_db_connection()
+    cursor_users = conn_users.cursor()
+
     for order in orders:
-        # Load cart items from JSON and calculate the subtotal
+        # Fetch the user's name from the user database
+        user = cursor_users.execute(
+            "SELECT name FROM users WHERE user_id = ?",
+            (order["user_id"],),
+        ).fetchone()
+        user_name = user["name"] if user else "Unknown User"
+
+        # Load cart items from JSON and retrieve item details from the items table
         cart = json.loads(order["cart"])
-        subtotal = sum(
-            item["quantity"] * item.get("price", 0)
-            for item in cart.values()
-        )
+        detailed_cart = {}
+        subtotal = 0
+
+        for item_id, item_info in cart.items():
+            item_data = cursor_orders.execute(
+                "SELECT name, price FROM items WHERE id = ?", (item_id,)
+            ).fetchone()
+            if item_data:
+                item_price = item_data["price"]
+                quantity = item_info["quantity"]
+                item_total = quantity * item_price
+                subtotal += item_total
+
+                # Update the cart with full item details
+                detailed_cart[item_id] = {
+                    "name": item_data["name"],
+                    "price": item_price,
+                    "quantity": quantity,
+                    "total": item_total,
+                }
+
         earnings = round(subtotal * 0.1, 2)  # Calculate 10% earnings
 
         deliveries[str(order["id"])] = {
             "id": order["id"],
             "timestamp": order["timestamp"],
             "user_id": order["user_id"],
+            "user_name": user_name,  # Add user's name to the delivery details
             "total_items": order["total_items"],
-            "cart": cart,
+            "cart": detailed_cart,  # Use the detailed cart with item names and prices
             "location": order["location"],
-            "earnings": earnings,  # Include earnings in the delivery dictionary
+            "subtotal": round(subtotal, 2),
+            "earnings": earnings,
         }
-    conn.close()
+
+    # Close both database connections
+    conn_orders.close()
+    conn_users.close()
+
     return jsonify(deliveries)
 
 
