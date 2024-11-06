@@ -252,7 +252,10 @@ def decline_delivery(delivery_id):
 
 
 @app.route('/get_shopper_timeline/<delivery_id>', methods=['GET'])
-def get_shopper_timeline(delivery_id=1):
+def get_shopper_timeline():
+    """Get where the deliverer is in the timeline"""
+    # note have not implemented deliverer change in timeline status
+    # so always going to be default value of 'U-Store' for rn
     conn = get_main_db_connection()
     cursor = conn.cursor()
 
@@ -261,7 +264,6 @@ def get_shopper_timeline(delivery_id=1):
         FROM orders
         WHERE id = ?
     ''', (1,))
-    
 
     timeline_status = cursor.fetchone()
     conn.close()
@@ -270,8 +272,8 @@ def get_shopper_timeline(delivery_id=1):
         # Assuming `timeline` is stored as a JSON string or simple text
         serialized_timeline = timeline_status[0]  # Extract the first element of the row
         return jsonify(timeline=serialized_timeline), 200  # Return a JSON response
-    else:
-        return jsonify({'error': 'Order not found'}), 404
+    
+    return jsonify({'error': 'Order not found'}), 404
 
 
 if __name__ == "__main__":
