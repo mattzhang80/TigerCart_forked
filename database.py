@@ -50,7 +50,8 @@ def init_main_db():
             user_id INTEGER,
             total_items INTEGER,
             cart TEXT,
-            location TEXT
+            location TEXT,
+            timeline TEXT DEFAULT 'U-Store'
         )
     """
     )
