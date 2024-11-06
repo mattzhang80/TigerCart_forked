@@ -252,7 +252,7 @@ def decline_delivery(delivery_id):
 
 
 @app.route('/get_shopper_timeline/<delivery_id>', methods=['GET'])
-def get_shopper_timeline():
+def get_shopper_timeline(g):
     """Get where the deliverer is in the timeline"""
     # note have not implemented deliverer change in timeline status
     # so always going to be default value of 'U-Store' for rn
@@ -272,7 +272,7 @@ def get_shopper_timeline():
         # Assuming `timeline` is stored as a JSON string or simple text
         serialized_timeline = timeline_status[0]  # Extract the first element of the row
         return jsonify(timeline=serialized_timeline), 200  # Return a JSON response
-    
+ 
     return jsonify({'error': 'Order not found'}), 404
 
 
