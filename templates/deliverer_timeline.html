@@ -3,8 +3,8 @@
 
 {% block content %}
 <h1>Delivery Timeline</h1>
-<h2><u>Delivery Items</u></h2>
-<ul>
+<h3 style="margin-bottom: 1px;"><u>Delivery Items</u></h3>
+<ul style="margin-top: 1px;">
     {% for item_id, item in items.items() %}
         <li>{{ item.name }} - Quantity: {{ item.quantity }}</li>
     {% endfor %}
