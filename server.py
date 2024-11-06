@@ -251,5 +251,28 @@ def decline_delivery(delivery_id):
     return jsonify({"success": True}), 200  # Return a JSON response
 
 
+@app.route('/get_shopper_timeline/<delivery_id>', methods=['GET'])
+def get_shopper_timeline(delivery_id=1):
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT timeline
+        FROM orders
+        WHERE id = ?
+    ''', (1,))
+    
+
+    timeline_status = cursor.fetchone()
+    conn.close()
+
+    if timeline_status:
+        # Assuming `timeline` is stored as a JSON string or simple text
+        serialized_timeline = timeline_status[0]  # Extract the first element of the row
+        return jsonify(timeline=serialized_timeline), 200  # Return a JSON response
+    else:
+        return jsonify({'error': 'Order not found'}), 404
+
+
 if __name__ == "__main__":
     app.run(port=5150, debug=get_debug_mode())

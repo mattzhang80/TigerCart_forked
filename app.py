@@ -342,5 +342,18 @@ def delivery_timeline(delivery_id):
     return "Delivery not found", 404
 
 
+@app.route('/shopper_timeline/<delivery_id>', methods=['GET'])
+def shopper_timeline(delivery_id=1):
+    # Get timeline data for the shopper
+    response = requests.get(
+        f'{SERVER_URL}/get_shopper_timeline/1',
+        timeout=REQUEST_TIMEOUT,
+    )
+    if response.status_code == 200:
+        timeline_stuff = response.json()
+        print('app', timeline_stuff)
+        return render_template('shopper_timeline.html', delivery_id=timeline_stuff)
+    return 'Order not found', 404
+
 if __name__ == "__main__":
     app.run(port=8000, debug=get_debug_mode())

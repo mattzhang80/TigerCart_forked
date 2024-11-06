@@ -78,7 +78,7 @@ function placeOrder(itemsInCart) {
         .then(response => {
             if (response.ok) {
                 alert('Order placed successfully!');
-                window.location.href = '/';
+                window.location.href = '/'; // change to /shopper_timeline
             } else {
                 alert('Failed to place the order.');
             }
