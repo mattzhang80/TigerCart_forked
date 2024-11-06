@@ -336,7 +336,8 @@ def delivery_timeline(delivery_id):
     if response.status_code == 200:
         delivery = response.json()
         return render_template(
-            "deliverer_timeline.html", delivery=delivery
+            "deliverer_timeline.html", delivery=delivery,
+            items=delivery['cart']
         )
     return "Delivery not found", 404
 

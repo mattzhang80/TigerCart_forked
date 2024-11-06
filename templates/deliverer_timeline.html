@@ -3,26 +3,32 @@
 
 {% block content %}
 <h1>Delivery Timeline</h1>
+<h2><u>Delivery Items</u></h2>
+<ul>
+    {% for item_id, item in items.items() %}
+        <li>{{ item.name }} - Quantity: {{ item.quantity }}</li>
+    {% endfor %}
+</ul>
 <div class="timeline">
     <div class="step" id="shopping-step">
         <div class="circle"></div>
         <span class="step-text">Shopping in U-Store</span>
-        <button onclick="markStepComplete('shopping-step')" id="shopping-status">Not Completed</button>
+        <button onclick="markStepComplete('shopping-step')" id="shopping-status" style="background-color: grey;">Mark as Completed</button>
     </div>
     <div class="step" id="checking-out-step">
         <div class="circle"></div>
         <span class="step-text">Checking Out</span>
-        <button onclick="markStepComplete('checking-out-step')" id="checking-out-status">Not Completed</button>
+        <button onclick="markStepComplete('checking-out-step')" id="checking-out-status" style="background-color: grey;">Mark as Completed</button>
     </div>
     <div class="step" id="on-delivery-step">
         <div class="circle"></div>
         <span class="step-text">On delivery</span>
-        <button onclick="markStepComplete('on-delivery-step')" id="on-delivery-status">Not Completed</button>
+        <button onclick="markStepComplete('on-delivery-step')" id="on-delivery-status" style="background-color: grey;">Mark as Completed</button>
     </div>
     <div class="step" id="delivered-step">
         <div class="circle"></div>
         <span class="step-text">Delivered</span>
-        <button onclick="markStepComplete('delivered-step')" id='delivered-status'>Not Completed</button>
+        <button onclick="markStepComplete('delivered-step')" id='delivered-status' style="background-color: grey;">Mark as Completed</button>
     </div>
 </div>
 {% endblock %}
