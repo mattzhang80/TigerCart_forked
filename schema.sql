@@ -27,13 +27,14 @@ CREATE TABLE cart (
 );
 
 CREATE TABLE orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    status TEXT CHECK(status IN ('placed', 'claimed', 'fulfilled', 'cancelled')),
+    id INTEGER PRIMARY KEY,
+    status TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     user_id INTEGER,
     total_items INTEGER,
     cart TEXT,
     location TEXT,
-    timeline TEXT DEFAULT 'U-Store',
+    timeline TEXT,
     FOREIGN KEY (user_id) REFERENCES users (user_id)
 );
+

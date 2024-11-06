@@ -254,11 +254,12 @@
         <div class="profile" onclick="toggleDropdown()">
             <i class="fas fa-user-circle profile-icon"></i>
             <div class="dropdown">
+                <a href="{{ url_for('profile') }}">Profile</a>
                 <a href="#" onclick="logoutUser()">Log Out</a>
-                <a href="#" onclick="logoutUser()">Profile</a>
                 <a href="#" onclick="logoutUser()">Settings</a>
             </div>
         </div>
+
     </div>
 
     <div class="content-wrapper">

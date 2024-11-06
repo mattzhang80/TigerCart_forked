@@ -224,11 +224,6 @@ def order_confirmation():
 @app.route("/place_order", methods=["POST"])
 def place_order():
     """Places an order and clears the user's cart."""
-    conn = get_main_db_connection()
-    user_conn = get_user_db_connection()
-    cursor = conn.cursor()
-    user_cursor = user_conn.cursor()
-
     user_id = session.get("user_id")
     data = request.get_json()
     delivery_location = data.get("delivery_location")
@@ -236,6 +231,9 @@ def place_order():
     if not delivery_location:
         return jsonify({"error": "Delivery location is required"}), 400
 
+    # Fetch user's cart
+    user_conn = get_user_db_connection()
+    user_cursor = user_conn.cursor()
     user = user_cursor.execute(
         "SELECT cart FROM users WHERE user_id = ?", (user_id,)
     ).fetchone()
@@ -244,9 +242,22 @@ def place_order():
     if not cart:
         return jsonify({"error": "Cart is empty"}), 400
 
+    # Fetch items to get current prices
+    items_response = requests.get(f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT)
+    items = items_response.json()
+
+    # Update cart with item prices
+    for item_id in cart:
+        item = items.get(item_id)
+        if item:
+            cart[item_id]["price"] = item["price"]
+            cart[item_id]["name"] = item["name"]
+
     total_items = sum(details["quantity"] for details in cart.values())
 
     # Insert the delivery information into the orders table
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
     cursor.execute(
         """INSERT INTO orders
         (status, user_id, total_items, cart, location)
@@ -270,7 +281,6 @@ def place_order():
     user_conn.close()
 
     return redirect(url_for("home"))
-
 
 @app.route("/deliver")
 def deliver():
@@ -355,6 +365,85 @@ def shopper_timeline(): #maybe add delivery id as a var
         print('app', timeline_stuff)
         return render_template('shopper_timeline.html', delivery_id=timeline_stuff)
     return 'Order not found', 404
+
+def get_user_data(user_id):
+    """Fetches user data from the database."""
+    conn = get_user_db_connection()
+    cursor = conn.cursor()
+    user = cursor.execute(
+        "SELECT * FROM users WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    conn.close()
+    return user
+
+def get_user_orders(user_id):
+    """Fetches all orders made by the user."""
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+    orders = cursor.execute(
+        "SELECT * FROM orders WHERE user_id = ? ORDER BY timestamp DESC", (user_id,)
+    ).fetchall()
+    conn.close()
+    return orders
+
+def calculate_user_stats(orders):
+    """Calculates statistics based on the user's orders."""
+    total_spent = 0
+    total_items = 0
+    for order in orders:
+        total_items += order['total_items']
+        cart = json.loads(order['cart'])
+        subtotal = sum(
+            details.get("quantity", 0) * details.get("price", 0)
+            for details in cart.values()
+        )
+        total_spent += subtotal
+
+    stats = {
+        'total_orders': len(orders),
+        'total_spent': round(total_spent, 2),
+        'total_items': total_items,
+    }
+    return stats
+
+def calculate_order_total(order):
+    """Calculates the total amount for an order."""
+    cart = json.loads(order['cart'])
+    subtotal = sum(
+        details.get("quantity", 0) * details.get("price", 0)
+        for details in cart.values()
+    )
+    return round(subtotal, 2)
+
+@app.route('/profile')
+def profile():
+    """Displays the user's profile, order history, and statistics."""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    user_name = session.get('user_name', 'Guest')
+
+    # Fetch user data and orders
+    user_data = get_user_data(user_id)
+    orders = get_user_orders(user_id)
+    stats = calculate_user_stats(orders)
+
+    # Calculate order totals and prepare data for template
+    orders_with_totals = []
+    for order in orders:
+        cart = json.loads(order['cart'])
+        subtotal = sum(
+            details.get("quantity", 0) * details.get("price", 0)
+            for item_id, details in cart.items()
+        )
+        order_data = dict(order)
+        order_data['total'] = round(subtotal, 2)
+        orders_with_totals.append(order_data)
+
+    return render_template('profile.html', user=user_data, orders=orders_with_totals, stats=stats)
+
+
 
 if __name__ == "__main__":
     app.run(port=8000, debug=get_debug_mode())
