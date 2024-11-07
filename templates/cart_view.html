@@ -4,19 +4,33 @@
 {% block content %}
 <h1>Your Cart</h1>
 <ul>
-    {% for item_id, details in cart.items() %}
-    <li>
-        {{ items[item_id].name }} - ${{ items[item_id].price }}
-        <br>
-        <button onclick="updateQuantity('{{ item_id }}', 'decrease')">-</button>
-        {{ details.quantity }}
-        <button onclick="updateQuantity('{{ item_id }}', 'increase')">+</button>
-        <button class="delete-button" onclick="deleteItem('{{ item_id }}')">Delete</button>
-    </li>
-    {% endfor %}
+    <table></table>
+        <thead>
+            <tr>
+                <td><strong>Item</strong></td>
+                <td><strong>Price ($)</strong></td>
+                <td><strong>Quantity</strong></td>
+                <td></td>
+                <td><strong>Quantity</strong></td>
+                <td></td>
+            </tr>
+        </thead>
+        <tr>
+
+
+        </tr>
+        {% for item_id, details in cart.items() %}
+            {{ items[item_id].name }} - ${{ items[item_id].price }}
+            <button onclick="updateQuantity('{{ item_id }}', 'decrease')">-</button>
+            {{ details.quantity }}
+            <button onclick="updateQuantity('{{ item_id }}', 'increase')">+</button>
+            <button class="delete-button" onclick="deleteItem('{{ item_id }}')">Delete</button>
+        {% endfor %}
+    </table>
 </ul>
-<p>Subtotal: ${{ "%.2f"|format(subtotal) }}</p>
-<p>Delivery Fee (10%): ${{ "%.2f"|format(delivery_fee) }}</p>
+<hr color="#ff5722">
+<p><strong>Subtotal: </strong>${{ "%.2f"|format(subtotal) }}</p>
+<p><strong>Delivery Fee (10%): </strong>${{ "%.2f"|format(delivery_fee) }}</p>
 <p>Total: ${{ "%.2f"|format(total) }}</p>
 <button onclick="window.location.href='{{ url_for("order_confirmation") }}'">Place Order</button>
 {% endblock %}
