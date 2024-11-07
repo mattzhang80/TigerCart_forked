@@ -364,7 +364,6 @@ def shopper_timeline(): #maybe add delivery id as a var
         timeline_stuff = response.json()
         print('app', timeline_stuff)
         return render_template('shopper_timeline.html')
-    
     return 'Order not found', 404
 
 
