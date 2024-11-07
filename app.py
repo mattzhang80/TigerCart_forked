@@ -424,7 +424,6 @@ def profile():
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    user_name = session.get('user_name', 'Guest')
 
     # Fetch user data and orders
     user_data = get_user_data(user_id)
