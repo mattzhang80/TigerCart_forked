@@ -3,13 +3,29 @@
 
 {% block content %}
 <h1>Delivery to {{ delivery.location }}</h1>
+<p><strong>Timestamp:</strong> {{ delivery.timestamp }}</p>
+<p><strong>User ID:</strong> {{ delivery.user_id }}</p>
+<p><strong>Total Items:</strong> {{ delivery.total_items }}</p>
+
+<h2>Items in Delivery</h2>
 <ul>
-    {% for item in delivery.delivery_items %}
-    <li>{{ item.name }} - ${{ item.price }} x {{ item.quantity }}</li>
+    {% for item_id, item in delivery.cart.items() %}
+        <li>{{ item.name }} - ${{ "%.2f"|format(item.price) }} x {{ item.quantity }} = ${{ "%.2f"|format(item.total) }}</li>
     {% endfor %}
 </ul>
-<p>Total: ${{ delivery.total }}</p>
-<p>Earnings: ${{ delivery.earnings }}</p>
-<button onclick="acceptDelivery({{ delivery.id }})">Accept</button>
-<button onclick="declineDelivery({{ delivery.id }})">Decline</button>
+
+<p><strong>Subtotal:</strong> ${{ "%.2f"|format(delivery.subtotal) }}</p>
+<p><strong>Earnings:</strong> ${{ "%.2f"|format(delivery.earnings) }}</p>
+
+<!-- Accept and Decline Forms -->
+<div style="margin-top: 20px;">
+    <form action="{{ url_for('accept_delivery', delivery_id=delivery.id) }}" method="post" style="display:inline;">
+        <button type="submit">Accept</button>
+    </form>
+    <form action="{{ url_for('decline_delivery', delivery_id=delivery.id) }}" method="post" style="display:inline;">
+        <button type="submit">Decline</button>
+    </form>
+</div>
+
 {% endblock %}
+

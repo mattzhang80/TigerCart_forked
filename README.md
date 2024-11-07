@@ -16,12 +16,13 @@
 - [X] Some style
 - [X] GitHub Actions CodeQL and pylint
 - [X] Website Live
-- [ ] Server (server.py running on tigercart.shop)
-- [ ] Database of orders (marked as: placed, claimed, fulfilled, cancelled; contains: time placed, items, prices, quantities, person who placed the order)
-- [ ] Database of users
-- [ ] Database of items
+- [X] Server
+- [X] Database of orders (marked as: placed, claimed, fulfilled, cancelled; contains: time placed, items, prices, quantities, person who placed the order)
+- [X] Real orders, not placeholders
+- [X] Database of items
 - [ ] Real items, not placeholders
-- [ ] Real orders, not placeholders
+- [X] Database of users
+- [ ] Real users, not placeholders
 - [ ] More style
 - [ ] Live U-Store data
 - [ ] Princeton CAS Authentication (CAS first, then maybe google)

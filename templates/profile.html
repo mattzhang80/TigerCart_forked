@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Profile - TigerCart{% endblock %}
+
+{% block content %}
+<h1>Welcome, {{ user.name }}!</h1>
+
+<h2>Your Statistics</h2>
+<ul>
+    <li>Total Orders: {{ stats.total_orders }}</li>
+    <li>Total Items Purchased: {{ stats.total_items }}</li>
+    <li>Total Spent: ${{ "%.2f"|format(stats.total_spent) }}</li>
+</ul>
+
+<h2>Order History</h2>
+{% if orders %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Total Items</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.timestamp }}</td>
+                <td>{{ order.total_items }}</td>
+                <td>{{ order.status }}</td>
+                <td>
+                    ${{ "%.2f"|format(order.total) }}
+                </td>
+                <td>
+                    <a href="{{ url_for('order_details', order_id=order.id) }}">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>You have no orders yet.</p>
+{% endif %}
+{% endblock %}
