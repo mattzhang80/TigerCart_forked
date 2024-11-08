@@ -364,7 +364,6 @@ def shopper_timeline(): #maybe add delivery id as a var
         timeline_stuff = response.json()
         print('app', timeline_stuff)
         return render_template('shopper_timeline.html')
-    
     return 'Order not found', 404
 
 
@@ -425,7 +424,6 @@ def profile():
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    user_name = session.get('user_name', 'Guest')
 
     # Fetch user data and orders
     user_data = get_user_data(user_id)
