@@ -352,19 +352,22 @@ def delivery_timeline(delivery_id):
     return "Delivery not found", 404
 
 
-@app.route('/shopper_timeline/<delivery_id>', methods=['GET'])
+@app.route('/shopper_timeline', methods=['GET'])
 def shopper_timeline(): #maybe add delivery id as a var
     """Displays a timeline for the shopper for their delivery"""
     # Get timeline data for the shopper
     response = requests.get(
-        f'{SERVER_URL}/get_shopper_timeline/1',
+        f'{SERVER_URL}/get_shopper_timeline',
         timeout=REQUEST_TIMEOUT,
     )
     if response.status_code == 200:
         timeline_stuff = response.json()
         print('app', timeline_stuff)
-        return render_template('shopper_timeline.html', delivery_id=timeline_stuff)
+        return render_template('shopper_timeline.html')
+    
     return 'Order not found', 404
+
+
 
 def get_user_data(user_id):
     """Fetches user data from the database."""

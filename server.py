@@ -251,7 +251,7 @@ def decline_delivery(delivery_id):
     return jsonify({"success": True}), 200  # Return a JSON response
 
 
-@app.route('/get_shopper_timeline/<delivery_id>', methods=['GET'])
+@app.route('/get_shopper_timeline', methods=['GET'])
 def get_shopper_timeline():
     """Get where the deliverer is in the timeline"""
     # note have not implemented deliverer change in timeline status
@@ -263,7 +263,7 @@ def get_shopper_timeline():
         SELECT timeline
         FROM orders
         WHERE id = ?
-    ''', (1,))
+    ''', (3,))
 
     timeline_status = cursor.fetchone()
     conn.close()
