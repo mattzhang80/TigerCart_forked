@@ -4,11 +4,24 @@
 {% block content %}
 <h1>{{ category.capitalize() }}</h1>
 <ul>
-    {% for item_id, item in items.items() %}
-    <li>{{ item.name }} - ${{ item.price }}
-        <button class="add-to-cart" data-item-id="{{ item_id }}">Add to Cart</button>
-    </li>
-    {% endfor %}
+    <table style="border: 1px solid black; border-collapse: collapse;" align="center">
+        <thead style="border: 1px solid black;">
+            <tr>
+                <td style="border: 1px solid black;"><strong>Item</strong></td>
+                <td style="border: 1px solid black;"><strong>Price ($)</strong></td>
+                <td style="border: 1px solid black;"><strong>Add to Cart</strong></td>
+            </tr>
+        </thead>
+        <tbody style="border: 1px solid black;">
+            {% for item_id, item in items.items() %}
+            <tr>
+                <td style="border: 1px solid black;">{{item.name}}</td>
+                <td style="border: 1px solid black;">{{item.price}}</td>
+                <td style="border: 1px solid black;"><button class="add-to-cart" data-item-id="{{ item_id }}">Add to Cart</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </ul>
 <a href="{{ url_for('cart_view') }}">
     <i class="fas fa-shopping-cart"></i>    View Cart

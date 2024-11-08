@@ -3,27 +3,47 @@
 
 {% block content %}
 <h1>Your Cart</h1>
-<ul>
-    {% for item_id, details in cart.items() %}
-        {% if item_id in items %}
-        <li>
-            {{ items[item_id].name }} - ${{ "%.2f"|format(items[item_id].price) }}
-            <br>
-            Quantity: {{ details.quantity }}
-            <button onclick="updateQuantity('{{ item_id }}', 'decrease')">-</button>
-            {{ details.quantity }}
-            <button onclick="updateQuantity('{{ item_id }}', 'increase')">+</button>
-            <button class="delete-button" onclick="deleteItem('{{ item_id }}')">Delete</button>
-        </li>
-        {% else %}
-        <li>Item not found in inventory.</li>
-        {% endif %}
-    {% else %}
-    <li>Your cart is empty.</li>
-    {% endfor %}
-</ul>
-<p>Subtotal: ${{ "%.2f"|format(subtotal) }}</p>
-<p>Delivery Fee (10%): ${{ "%.2f"|format(delivery_fee) }}</p>
-<p>Total: ${{ "%.2f"|format(total) }}</p>
+
+<hr color="#ff5722">
+
+<h2><u>Items</u></h2>
+    {% if cart.items() %}
+        <ul>
+            <table style="border: 1px solid black; border-collapse: collapse;" align="center">
+                <thead style="border: 1px solid black">
+                    <tr>
+                        <td style="border: 1px solid black;"><strong>Item</strong></td>
+                        <td style="border: 1px solid black;"><strong>Price ($)</strong></td>
+                        <td style="border: 1px solid black;"><strong>Decrease Quantity</strong></td>
+                        <td style="border: 1px solid black;"><strong>Quantity</strong></td>
+                        <td style="border: 1px solid black;"><strong>Increase Quantity</strong></td>
+                        <td style="border: 1px solid black;"><strong>Remove Item</strong></td>
+                    </tr>
+                </thead>
+                <tbody style="border: 1px solid black;">
+                    {% for item_id, details in cart.items() %}
+                    <tr>
+                        <td style="border: 1px solid black;">{{items[item_id].name}}</td>
+                        <td style="border: 1px solid black;">{{items[item_id].price}}</td>
+                        <td style="border: 1px solid black;"><button onclick="updateQuantity('{{ item_id }}', 'decrease')">-</button></td>
+                        <td style="border: 1px solid black;">{{details.quantity}}</td>
+                        <td style="border: 1px solid black;"><button onclick="updateQuantity('{{ item_id }}', 'increase')">+</button></td>
+                        <td style="border: 1px solid black;"><button class="delete-button" onclick="deleteItem('{{ item_id }}')">Delete</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </ul>
+    {% endif %}
+
+<hr color="#ff5722">
+
+<h2><u>Cost</u></h2>
+<p><strong>Subtotal: </strong>${{ "%.2f"|format(subtotal) }}</p>
+<p><strong>Delivery Fee (10%): </strong>${{ "%.2f"|format(delivery_fee) }}</p>
+<p><strong>Total: </strong>${{ "%.2f"|format(total) }}</p>
+
+<hr color="#ff5722">
+
 <button onclick="window.location.href='{{ url_for("order_confirmation") }}'">Place Order</button>
 {% endblock %}

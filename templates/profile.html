@@ -4,39 +4,39 @@
 {% block content %}
 <h1>Welcome, {{ user.name }}!</h1>
 
-<h2>Your Statistics</h2>
+<hr color="#ff5722">
+
+<h2><u>Your Statistics</u></h2>
 <ul>
-    <li>Total Orders: {{ stats.total_orders }}</li>
-    <li>Total Items Purchased: {{ stats.total_items }}</li>
-    <li>Total Spent: ${{ "%.2f"|format(stats.total_spent) }}</li>
+    <li><strong>Total Orders: </strong>{{ stats.total_orders }}</li>
+    <li><strong>Total Items Purchased: </strong>{{ stats.total_items }}</li>
+    <li><strong>Total Money Spent: </strong>${{ "%.2f"|format(stats.total_spent) }}</li>
 </ul>
 
-<h2>Order History</h2>
+<hr color="#ff5722">
+
+<h2><u>Order History</u></h2>
 {% if orders %}
-    <table class="table">
-        <thead>
+    <table style="border: 1px solid black; border-collapse: collapse;" align="center">
+        <thead style="border: 1px solid black;">
             <tr>
-                <th>Order ID</th>
-                <th>Date</th>
-                <th>Total Items</th>
-                <th>Status</th>
-                <th>Total</th>
-                <th>Details</th>
+                <td style="border: 1px solid black;"><strong>Order ID</strong></td>
+                <td style="border: 1px solid black;"><strong>Date</strong></td>
+                <td style="border: 1px solid black;"><strong>Total Items</strong></td>
+                <td style="border: 1px solid black;"><strong>Status</strong></td>
+                <td style="border: 1px solid black;"><strong>Total ($)</strong></td>
+                <td style="border: 1px solid black;"><strong>Details</strong></td>
             </tr>
         </thead>
         <tbody>
             {% for order in orders %}
             <tr>
-                <td>{{ order.id }}</td>
-                <td>{{ order.timestamp }}</td>
-                <td>{{ order.total_items }}</td>
-                <td>{{ order.status }}</td>
-                <td>
-                    ${{ "%.2f"|format(order.total) }}
-                </td>
-                <td>
-                    <a href="{{ url_for('order_details', order_id=order.id) }}">View</a>
-                </td>
+                <td style="border: 1px solid black;">{{ order.id }}</td>
+                <td style="border: 1px solid black;">{{ order.timestamp }}</td>
+                <td style="border: 1px solid black;">{{ order.total_items }}</td>
+                <td style="border: 1px solid black;">{{ order.status }}</td>
+                <td style="border: 1px solid black;">{{ "%.2f"|format(order.total) }}</td>
+                <td style="border: 1px solid black;"><a href="{{ url_for('order_details', order_id=order.id) }}">View</a></td>
             </tr>
             {% endfor %}
         </tbody>

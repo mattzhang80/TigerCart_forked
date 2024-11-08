@@ -4,7 +4,7 @@
 {% block content %}
 <h1>Select Your User</h1>
 <form method="POST" action="{{ url_for('login') }}">
-    <label for="user_id">Choose your name:</label>
+    <label for="user_id">Choose Your Name:</label>
     <select name="user_id" id="user_id" required>
         {% for user in users %}
         <option value="{{ user['user_id'] }}">{{ user['name'] }}</option>
