@@ -32,3 +32,10 @@
 - [ ] User favorite items
 - [ ] Deliverer hide "declined" orders
 - [ ] Connect timeline
+
+## Alpha
+
+- Almost MVP
+- Everything deployed
+- Working end-to-end
+- Timeline
