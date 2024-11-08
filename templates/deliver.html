@@ -4,11 +4,27 @@
 {% block content %}
 <h1>Available Deliveries</h1>
 <ul>
-    {% for delivery in deliveries %}
-    <li>
-        {{ delivery.total_items }} items for {{ delivery.user_name }} to {{ delivery.location }} - Earnings: ${{ "%.2f"|format(delivery.earnings) }}
-        <a href="{{ url_for('delivery_details', delivery_id=delivery.id) }}">See More</a>
-    </li>
-    {% endfor %}
+    <table style="border: 1px solid black; border-collapse: collapse;" align="center">
+        <thead style="border: 1px solid black;">
+            <tr>
+                <td style="border: 1px solid black;"><strong>Item Quantity</strong></td>
+                <td style="border: 1px solid black;"><strong>Shopper Name</strong></td>
+                <td style="border: 1px solid black;"><strong>Delivery Location</strong></td>
+                <td style="border: 1px solid black;"><strong>Earnings ($)</strong></td>
+                <td style="border: 1px solid black;"><strong>More Details</strong></td>
+            </tr>
+        </thead>
+        <tbody style="border: 1px solid black;">
+            {% for delivery in deliveries %}
+            <tr>
+                <td style="border: 1px solid black;">{{delivery.total_items}}</td>
+                <td style="border: 1px solid black;">{{delivery.user_name}}</td>
+                <td style="border: 1px solid black;">{{delivery.location}}</td>
+                <td style="border: 1px solid black;">{{"%.2f"|format(delivery.earnings)}}</td>
+                <td style="border: 1px solid black;"><a href="{{ url_for('delivery_details', delivery_id=delivery.id) }}">See More</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </ul>
 {% endblock %}
