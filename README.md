@@ -26,3 +26,8 @@
 - [ ] More style
 - [ ] Live U-Store data
 - [ ] Princeton CAS Authentication (CAS first, then maybe google)
+- [ ] Edge cases (if item not found)
+- [ ] Settings page
+- [ ] Mobile-first category ribbon with population
+- [ ] User favorite items
+- [ ] Deliverer hide "declined" orders
