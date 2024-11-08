@@ -31,3 +31,4 @@
 - [ ] Mobile-first category ribbon with population
 - [ ] User favorite items
 - [ ] Deliverer hide "declined" orders
+- [ ] Connect timeline
