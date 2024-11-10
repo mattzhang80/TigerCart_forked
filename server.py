@@ -47,7 +47,7 @@ def manage_cart():
         item_id = str(data.get("item_id"))
         action = data.get("action")
 
-        # Here, use get_main_db_connection() for the items table
+        # Check if the item exists in inventory
         item_conn = get_main_db_connection()
         item_cursor = item_conn.cursor()
         item_exists = item_cursor.execute(
@@ -62,7 +62,7 @@ def manage_cart():
                 404,
             )
 
-        # Proceed with modifying cart based on action
+        # Modify cart based on action
         if action == "add":
             cart[item_id] = {
                 "quantity": cart.get(item_id, {}).get("quantity", 0) + 1
@@ -122,6 +122,7 @@ def fetch_detailed_cart(cart, cursor_orders):
 @app.route("/deliveries", methods=["GET"])
 def get_deliveries():
     """Fetches and returns all deliveries with user names, item details, and earnings."""
+    deliverer_id = request.json.get("user_id")
     conn_orders = get_main_db_connection()
     cursor_orders = conn_orders.cursor()
     conn_users = get_user_db_connection()
@@ -129,24 +130,22 @@ def get_deliveries():
 
     orders = cursor_orders.execute(
         """
-        SELECT id, timestamp, user_id, total_items, cart, location
+        SELECT id, timestamp, user_id, total_items, cart, location, status, claimed_by
         FROM orders
-        WHERE status = 'placed'
-        """
+        WHERE (status = 'placed' OR (status = 'claimed' AND claimed_by = ?))
+        AND status != 'declined'
+        """,
+        (deliverer_id,),
     ).fetchall()
 
     deliveries = {}
-
     for order in orders:
         user_name = fetch_user_name(order["user_id"], cursor_users)
-
-        # Load and fetch detailed item information for each cart item
         cart = json.loads(order["cart"])
         detailed_cart, subtotal = fetch_detailed_cart(
             cart, cursor_orders
         )
-
-        earnings = round(subtotal * 0.1, 2)  # Calculate 10% earnings
+        earnings = round(subtotal * 0.1, 2)
 
         deliveries[str(order["id"])] = {
             "id": order["id"],
@@ -162,7 +161,6 @@ def get_deliveries():
 
     conn_orders.close()
     conn_users.close()
-
     return jsonify(deliveries)
 
 
@@ -177,42 +175,16 @@ def get_delivery(delivery_id):
     ).fetchone()
 
     if order:
-        # Parse the cart JSON to get item quantities
         cart_data = json.loads(order["cart"])
+        detailed_cart, subtotal = fetch_detailed_cart(cart_data, cursor)
+        earnings = round(subtotal * 0.1, 2)
 
-        # Fetch item details from the items table for each item in the cart
-        detailed_cart = {}
-        subtotal = 0
-
-        for item_id, item_info in cart_data.items():
-            item = cursor.execute(
-                "SELECT name, price FROM items WHERE id = ?", (item_id,)
-            ).fetchone()
-
-            if item:
-                # Calculate the item's total price based on its quantity
-                item_total = item_info["quantity"] * item["price"]
-                subtotal += item_total
-
-                # Add complete item details to the cart
-                detailed_cart[item_id] = {
-                    "name": item["name"],
-                    "price": item["price"],
-                    "quantity": item_info["quantity"],
-                    "total": item_total,
-                }
-
-        earnings = round(
-            subtotal * 0.1, 2
-        )  # Calculate earnings as 10% of subtotal
-
-        # Prepare the delivery dictionary to return
         delivery = {
             "id": order["id"],
             "timestamp": order["timestamp"],
             "user_id": order["user_id"],
             "total_items": order["total_items"],
-            "cart": detailed_cart,  # Use the fully detailed cart
+            "cart": detailed_cart,
             "location": order["location"],
             "subtotal": round(subtotal, 2),
             "earnings": earnings,
@@ -227,53 +199,50 @@ def get_delivery(delivery_id):
 @app.route("/accept_delivery/<delivery_id>", methods=["POST"])
 def accept_delivery(delivery_id):
     """Marks the delivery as accepted by changing its status."""
+    user_id = request.json.get("user_id")
     conn = get_main_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "UPDATE orders SET status = 'claimed' WHERE id = ?",
-        (delivery_id,),
+        "UPDATE orders SET status = 'claimed', claimed_by = ? WHERE id = ?",
+        (user_id, delivery_id),
     )
     conn.commit()
     conn.close()
-    return jsonify({"success": True}), 200  # Return a JSON response
+    return jsonify({"success": True}), 200
 
 
 @app.route("/decline_delivery/<delivery_id>", methods=["POST"])
 def decline_delivery(delivery_id):
-    """Declines the delivery by deleting the order."""
+    """Declines the delivery by updating the status to 'declined'."""
     conn = get_main_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("DELETE FROM orders WHERE id = ?", (delivery_id,))
+    cursor.execute(
+        "UPDATE orders SET status = 'declined' WHERE id = ?",
+        (delivery_id,),
+    )
     conn.commit()
     conn.close()
-    return jsonify({"success": True}), 200  # Return a JSON response
+    return jsonify({"success": True}), 200
 
 
-@app.route('/get_shopper_timeline', methods=['GET'])
+@app.route("/get_shopper_timeline", methods=["GET"])
 def get_shopper_timeline():
-    """Get where the deliverer is in the timeline"""
-    # note have not implemented deliverer change in timeline status
-    # so always going to be default value of 'U-Store' for rn
+    """Get the current timeline status of the shopper's order."""
+    order_id = request.args.get("order_id")
     conn = get_main_db_connection()
     cursor = conn.cursor()
-
-    cursor.execute('''
-        SELECT timeline
-        FROM orders
-        WHERE id = ?
-    ''', (3,))
-
+    cursor.execute(
+        "SELECT timeline FROM orders WHERE id = ?", (order_id,)
+    )
     timeline_status = cursor.fetchone()
     conn.close()
 
     if timeline_status:
-        # Assuming `timeline` is stored as a JSON string or simple text
-        serialized_timeline = timeline_status[0]  # Extract the first element of the row
-        return jsonify(timeline=serialized_timeline), 200  # Return a JSON response
+        return jsonify(timeline=timeline_status["timeline"]), 200
 
-    return jsonify({'error': 'Order not found'}), 404
+    return jsonify({"error": "Order not found"}), 404
 
 
 if __name__ == "__main__":

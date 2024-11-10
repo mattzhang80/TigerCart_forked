@@ -38,22 +38,25 @@ def init_main_db():
             price REAL NOT NULL,
             category TEXT NOT NULL
         )
-    """
+        """
     )
 
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY,
-            status TEXT CHECK(status IN ('placed', 'claimed', 'fulfilled', 'cancelled')),
+            status TEXT CHECK(status IN
+            ('placed', 'claimed', 'fulfilled', 'declined', 'cancelled')),
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             user_id INTEGER,
             total_items INTEGER,
             cart TEXT,
             location TEXT,
-            timeline TEXT DEFAULT 'U-Store'
+            timeline TEXT DEFAULT 'U-Store',
+            claimed_by INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users(user_id)
         )
-    """
+        """
     )
 
     conn.commit()
@@ -70,9 +73,22 @@ def init_user_db():
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
             name TEXT NOT NULL,
+            venmo_handle TEXT,
             cart TEXT DEFAULT '{}'
         )
-    """
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS favorites (
+            user_id INTEGER,
+            item_id INTEGER,
+            PRIMARY KEY (user_id, item_id),
+            FOREIGN KEY (user_id) REFERENCES users(user_id),
+            FOREIGN KEY (item_id) REFERENCES items(id)
+        )
+        """
     )
 
     conn.commit()

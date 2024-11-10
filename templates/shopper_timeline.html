@@ -1,7 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Shopper Timeline!{% endblock %}
-
-
+{% block title %}Order Timeline{% endblock %}
 {% block content %}
-<h1>Shopper Timeline...</h1>
+<h1>Your Order Timeline</h1>
+<div id="timeline">
+    <p>Status: {{ order['timeline'] }}</p>
+</div>
+<script>
+    function refreshTimeline() {
+        fetch("{{ url_for('order_status', order_id=order['id']) }}")
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("timeline").innerHTML = "Status: " + data.timeline;
+            });
+    }
+    setInterval(refreshTimeline, 10000);
+</script>
 {% endblock %}

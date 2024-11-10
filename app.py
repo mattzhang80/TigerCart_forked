@@ -14,6 +14,7 @@ from flask import (
     request,
     session,
     jsonify,
+    flash,
 )
 from config import get_debug_mode, SECRET_KEY
 from database import get_main_db_connection, get_user_db_connection
@@ -21,12 +22,21 @@ from database import get_main_db_connection, get_user_db_connection
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
-# Define the base URL for the server
 SERVER_URL = "http://localhost:5150"
-REQUEST_TIMEOUT = 5  # Timeout in seconds for all requests
+REQUEST_TIMEOUT = 5
 DELIVERY_FEE_PERCENTAGE = 0.1
 
 
+# Root route
+@app.route("/")
+def home():
+    """Redirects to login if the user is not logged in, else shows home page."""
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    return render_template("home.html")
+
+
+# Login route
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Login page to authenticate the user."""
@@ -51,19 +61,39 @@ def login():
     return render_template("login.html", users=users)
 
 
+# Logout route
 @app.route("/logout", methods=["POST"])
 def logout():
     """Logs the user out and clears the session."""
-    session["user_id"] = None
-    return "", 204
+    session.clear()
+    return redirect(url_for("login"))
 
 
-@app.route("/")
-def home():
-    """Home page. Redirects to login if user is not logged in."""
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    """Settings page where user can update their Venmo handle."""
     if "user_id" not in session:
         return redirect(url_for("login"))
-    return render_template("home.html")
+    user_id = session["user_id"]
+    conn = get_user_db_connection()
+    cursor = conn.cursor()
+    if request.method == "POST":
+        venmo_handle = request.form.get("venmo_handle")
+        cursor.execute(
+            "UPDATE users SET venmo_handle = ? WHERE user_id = ?",
+            (venmo_handle, user_id),
+        )
+        conn.commit()
+        flash("Venmo handle updated successfully.")
+        return redirect(url_for("settings"))
+    user = cursor.execute(
+        "SELECT venmo_handle FROM users WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    conn.close()
+    return render_template(
+        "settings.html",
+        venmo_handle=user["venmo_handle"] if user else "",
+    )
 
 
 @app.route("/shop")
@@ -172,17 +202,14 @@ def update_cart(item_id, action):
             timeout=REQUEST_TIMEOUT,
         )
     elif action == "decrease":
-        # Get the current cart to check the item's quantity
         cart_response = requests.get(
             f"{SERVER_URL}/cart",
             json={"user_id": user_id},
             timeout=REQUEST_TIMEOUT,
         )
         cart = cart_response.json()
-
         quantity = cart.get(item_id, {}).get("quantity", 0)
         if quantity > 1:
-            # Decrease quantity by 1
             requests.post(
                 f"{SERVER_URL}/cart",
                 json={
@@ -194,7 +221,6 @@ def update_cart(item_id, action):
                 timeout=REQUEST_TIMEOUT,
             )
         elif quantity == 1:
-            # Remove the item if quantity reaches 1
             requests.post(
                 f"{SERVER_URL}/cart",
                 json={
@@ -231,7 +257,6 @@ def place_order():
     if not delivery_location:
         return jsonify({"error": "Delivery location is required"}), 400
 
-    # Fetch user's cart
     user_conn = get_user_db_connection()
     user_cursor = user_conn.cursor()
     user = user_cursor.execute(
@@ -242,11 +267,11 @@ def place_order():
     if not cart:
         return jsonify({"error": "Cart is empty"}), 400
 
-    # Fetch items to get current prices
-    items_response = requests.get(f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT)
+    items_response = requests.get(
+        f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT
+    )
     items = items_response.json()
 
-    # Update cart with item prices
     for item_id in cart:
         item = items.get(item_id)
         if item:
@@ -254,8 +279,6 @@ def place_order():
             cart[item_id]["name"] = item["name"]
 
     total_items = sum(details["quantity"] for details in cart.values())
-
-    # Insert the delivery information into the orders table
     conn = get_main_db_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -271,7 +294,6 @@ def place_order():
         ),
     )
 
-    # Clear the user's cart after placing the order
     user_cursor.execute(
         "UPDATE users SET cart = '{}' WHERE user_id = ?", (user_id,)
     )
@@ -282,11 +304,15 @@ def place_order():
 
     return redirect(url_for("home"))
 
+
 @app.route("/deliver")
 def deliver():
     """Displays all deliveries available for claiming."""
+    deliverer_id = session.get("user_id")
     response = requests.get(
-        f"{SERVER_URL}/deliveries", timeout=REQUEST_TIMEOUT
+        f"{SERVER_URL}/deliveries",
+        json={"user_id": deliverer_id},
+        timeout=REQUEST_TIMEOUT,
     )
     deliveries = response.json()
     return render_template(
@@ -313,10 +339,10 @@ def accept_delivery(delivery_id):
     """Accepts a delivery by forwarding the request to the backend server."""
     response = requests.post(
         f"{SERVER_URL}/accept_delivery/{delivery_id}",
+        json={"user_id": session.get("user_id")},
         timeout=REQUEST_TIMEOUT,
     )
     if response.status_code == 200:
-        # Redirect to the delivery timeline or confirmation page
         return redirect(
             url_for("delivery_timeline", delivery_id=delivery_id)
         )
@@ -338,7 +364,6 @@ def decline_delivery(delivery_id):
 @app.route("/delivery_timeline/<delivery_id>")
 def delivery_timeline(delivery_id):
     """Displays a timeline for the accepted delivery."""
-    # Fetch necessary data for the delivery timeline
     response = requests.get(
         f"{SERVER_URL}/delivery/{delivery_id}",
         timeout=REQUEST_TIMEOUT,
@@ -346,28 +371,57 @@ def delivery_timeline(delivery_id):
     if response.status_code == 200:
         delivery = response.json()
         return render_template(
-            "deliverer_timeline.html", delivery=delivery,
-            items=delivery['cart']
+            "deliverer_timeline.html",
+            delivery=delivery,
+            items=delivery["cart"],
         )
     return "Delivery not found", 404
 
 
-@app.route('/shopper_timeline', methods=['GET'])
-def shopper_timeline(): #maybe add delivery id as a var
+@app.route("/shopper_timeline", methods=["GET"])
+def shopper_timeline():
     """Displays a timeline for the shopper for their delivery"""
-    # Get timeline data for the shopper
     response = requests.get(
-        f'{SERVER_URL}/get_shopper_timeline',
+        f"{SERVER_URL}/get_shopper_timeline",
         timeout=REQUEST_TIMEOUT,
     )
     if response.status_code == 200:
-        timeline_stuff = response.json()
-        print('app', timeline_stuff)
-        return render_template('shopper_timeline.html')
-    return 'Order not found', 404
+        timeline_data = response.json()
+        return render_template(
+            "shopper_timeline.html", timeline=timeline_data
+        )
+    return "Order not found", 404
 
 
+@app.route("/add_favorite/<item_id>", methods=["POST"])
+def add_favorite(item_id):
+    """Adds an item to the user's favorites."""
+    user_id = session["user_id"]
+    conn = get_user_db_connection()
+    conn.execute(
+        "INSERT OR IGNORE INTO favorites (user_id, item_id) VALUES (?, ?)",
+        (user_id, item_id),
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
 
+
+@app.route("/remove_favorite/<item_id>", methods=["POST"])
+def remove_favorite(item_id):
+    """Removes an item from the user's favorites."""
+    user_id = session["user_id"]
+    conn = get_user_db_connection()
+    conn.execute(
+        "DELETE FROM favorites WHERE user_id = ? AND item_id = ?",
+        (user_id, item_id),
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+
+# Helper function to fetch user data
 def get_user_data(user_id):
     """Fetches user data from the database."""
     conn = get_user_db_connection()
@@ -378,23 +432,28 @@ def get_user_data(user_id):
     conn.close()
     return user
 
+
+# Helper function to fetch all orders of the user
 def get_user_orders(user_id):
     """Fetches all orders made by the user."""
     conn = get_main_db_connection()
     cursor = conn.cursor()
     orders = cursor.execute(
-        "SELECT * FROM orders WHERE user_id = ? ORDER BY timestamp DESC", (user_id,)
+        "SELECT * FROM orders WHERE user_id = ? ORDER BY timestamp DESC",
+        (user_id,),
     ).fetchall()
     conn.close()
     return orders
 
+
+# Helper function to calculate user statistics based on orders
 def calculate_user_stats(orders):
     """Calculates statistics based on the user's orders."""
     total_spent = 0
     total_items = 0
     for order in orders:
-        total_items += order['total_items']
-        cart = json.loads(order['cart'])
+        total_items += order["total_items"]
+        cart = json.loads(order["cart"])
         subtotal = sum(
             details.get("quantity", 0) * details.get("price", 0)
             for details in cart.values()
@@ -402,28 +461,21 @@ def calculate_user_stats(orders):
         total_spent += subtotal
 
     stats = {
-        'total_orders': len(orders),
-        'total_spent': round(total_spent, 2),
-        'total_items': total_items,
+        "total_orders": len(orders),
+        "total_spent": round(total_spent, 2),
+        "total_items": total_items,
     }
     return stats
 
-def calculate_order_total(order):
-    """Calculates the total amount for an order."""
-    cart = json.loads(order['cart'])
-    subtotal = sum(
-        details.get("quantity", 0) * details.get("price", 0)
-        for details in cart.values()
-    )
-    return round(subtotal, 2)
 
-@app.route('/profile')
+# Profile route
+@app.route("/profile")
 def profile():
     """Displays the user's profile, order history, and statistics."""
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
+    if "user_id" not in session:
+        return redirect(url_for("login"))
 
-    user_id = session['user_id']
+    user_id = session["user_id"]
 
     # Fetch user data and orders
     user_data = get_user_data(user_id)
@@ -433,17 +485,21 @@ def profile():
     # Calculate order totals and prepare data for template
     orders_with_totals = []
     for order in orders:
-        cart = json.loads(order['cart'])
+        cart = json.loads(order["cart"])
         subtotal = sum(
             details.get("quantity", 0) * details.get("price", 0)
             for item_id, details in cart.items()
         )
         order_data = dict(order)
-        order_data['total'] = round(subtotal, 2)
+        order_data["total"] = round(subtotal, 2)
         orders_with_totals.append(order_data)
 
-    return render_template('profile.html', user=user_data, orders=orders_with_totals, stats=stats)
-
+    return render_template(
+        "profile.html",
+        user=user_data,
+        orders=orders_with_totals,
+        stats=stats,
+    )
 
 
 if __name__ == "__main__":

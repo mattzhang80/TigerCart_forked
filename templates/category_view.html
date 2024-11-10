@@ -3,6 +3,10 @@
 
 {% block content %}
 <h1>{{ category.capitalize() }}</h1>
+
+<hr color="#ff5722">
+
+<h2>Items in {{ category.capitalize() }}</h2>
 <ul>
     <table style="border: 1px solid black; border-collapse: collapse;" align="center">
         <thead style="border: 1px solid black;">
@@ -10,20 +14,77 @@
                 <td style="border: 1px solid black;"><strong>Item</strong></td>
                 <td style="border: 1px solid black;"><strong>Price ($)</strong></td>
                 <td style="border: 1px solid black;"><strong>Add to Cart</strong></td>
+                <td style="border: 1px solid black;"><strong>Favorite</strong></td>
             </tr>
         </thead>
         <tbody style="border: 1px solid black;">
             {% for item_id, item in items.items() %}
             <tr>
-                <td style="border: 1px solid black;">{{item.name}}</td>
-                <td style="border: 1px solid black;">{{item.price}}</td>
-                <td style="border: 1px solid black;"><button class="add-to-cart" data-item-id="{{ item_id }}">Add to Cart</button></td>
+                <td style="border: 1px solid black;">{{ item.name }}</td>
+                <td style="border: 1px solid black;">{{ item.price }}</td>
+                <td style="border: 1px solid black;">
+                    <button class="add-to-cart" data-item-id="{{ item_id }}">Add to Cart</button>
+                </td>
+                <td style="border: 1px solid black;">
+                    <button onclick="toggleFavorite('{{ item_id }}')">
+                        {% if item_id in favorites %}
+                            ★
+                        {% else %}
+                            ☆
+                        {% endif %}
+                    </button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </ul>
-<a href="{{ url_for('cart_view') }}">
-    <i class="fas fa-shopping-cart"></i>    View Cart
-</a>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.addEventListener('click', function(event) {
+            if (event.target.classList.contains('add-to-cart')) {
+                const itemId = event.target.getAttribute('data-item-id');
+                addToCart(itemId);
+            }
+        });
+    });
+
+    function addToCart(itemId) {
+        fetch(`/add_to_cart/${itemId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id: "{{ session.get('user_id') }}" })
+        }).then(response => {
+            if (response.ok) {
+                alert('Item added to cart!');
+            } else {
+                response.json().then(data => alert('Error: ' + data.error));
+            }
+        }).catch(error => {
+            console.error('Error adding to cart:', error);
+            alert('Failed to add item to cart.');
+        });
+    }
+
+    function toggleFavorite(itemId) {
+        {% if item_id in favorites %}
+        const url = "{{ url_for('remove_favorite', item_id=item_id) }}";
+        {% else %}
+        const url = "{{ url_for('add_favorite', item_id=item_id) }}";
+        {% endif %}
+
+        fetch(url, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Favorite status updated!");
+                    location.reload();
+                }
+            })
+            .catch(error => console.error("Error updating favorite:", error));
+    }
+</script>
 {% endblock %}

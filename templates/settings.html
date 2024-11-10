@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Settings - TigerCart{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<form method="POST" action="{{ url_for('settings') }}">
+    <label for="venmo_handle">Venmo Handle:</label>
+    <input type="text" name="venmo_handle" id="venmo_handle" value="{{ venmo_handle }}" required>
+    <button type="submit">Save</button>
+</form>
+{% endblock %}
