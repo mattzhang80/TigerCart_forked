@@ -246,7 +246,9 @@
         <div class="profile" onclick="toggleDropdown()">
             <i class="fas fa-user-circle profile-icon"></i>
             <div class="dropdown">
-                <a href="{{ url_for('profile') }}">Profile</a>
+                {% if session.get("user_id") %}
+                    <a href="{{ url_for('profile') }}">Profile</a>
+                {% endif %}
                 <a href="{{ url_for('settings') }}">Settings</a> <!-- Updated to link to settings page -->
                 <a href="#" onclick="logoutUser()">Log Out</a>
             </div>

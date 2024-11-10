@@ -6,7 +6,6 @@ Populates tigercart.sqlite3 and users.sqlite3
 
 import sqlite3
 
-# Define database file names
 MAIN_DATABASE = "tigercart.sqlite3"
 USER_DATABASE = "users.sqlite3"
 
@@ -52,7 +51,7 @@ def init_main_db():
             total_items INTEGER,
             cart TEXT,
             location TEXT,
-            timeline TEXT DEFAULT 'U-Store',
+            timeline TEXT DEFAULT '{}',
             claimed_by INTEGER,
             FOREIGN KEY (user_id) REFERENCES users(user_id)
         )
@@ -129,7 +128,6 @@ def populate_items():
 
     conn.commit()
     conn.close()
-    print("Sample items populated in tigercart.sqlite3.")
 
 
 def populate_users():
@@ -137,7 +135,6 @@ def populate_users():
     conn = get_user_db_connection()
     cursor = conn.cursor()
 
-    # Add initial users
     users = [
         (1, "Connor"),
         (2, "Jacob"),
@@ -152,11 +149,10 @@ def populate_users():
 
     conn.commit()
     conn.close()
-    print("Users populated in users.sqlite3.")
 
 
 if __name__ == "__main__":
-    init_main_db()  # Create tables in the main database
-    init_user_db()  # Create tables in the user database
-    populate_items()  # Populate items table with sample data
-    populate_users()  # Populate users table with initial users
+    init_main_db()
+    init_user_db()
+    populate_items()
+    populate_users()

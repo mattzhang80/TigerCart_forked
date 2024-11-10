@@ -23,7 +23,7 @@
                 <td style="border: 1px solid black;">{{ item.name }}</td>
                 <td style="border: 1px solid black;">{{ item.price }}</td>
                 <td style="border: 1px solid black;">
-                    <button class="add-to-cart" data-item-id="{{ item_id }}">Add to Cart</button>
+                    <button onclick="addToCart('{{ item_id }}')">Add to Cart</button>
                 </td>
                 <td style="border: 1px solid black;">
                     <button onclick="toggleFavorite('{{ item_id }}')">
@@ -40,16 +40,12 @@
     </table>
 </ul>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        document.body.addEventListener('click', function(event) {
-            if (event.target.classList.contains('add-to-cart')) {
-                const itemId = event.target.getAttribute('data-item-id');
-                addToCart(itemId);
-            }
-        });
-    });
+<!-- View Cart button at the bottom -->
+<a href="{{ url_for('cart_view') }}" class="content-wrapper">
+    <button><i class="fas fa-shopping-cart"></i> View Cart</button>
+</a>
 
+<script>
     function addToCart(itemId) {
         fetch(`/add_to_cart/${itemId}`, {
             method: 'POST',
@@ -59,7 +55,7 @@
             body: JSON.stringify({ user_id: "{{ session.get('user_id') }}" })
         }).then(response => {
             if (response.ok) {
-                alert('Item added to cart!');
+                alert('Item added to cart!'); // Only one alert
             } else {
                 response.json().then(data => alert('Error: ' + data.error));
             }

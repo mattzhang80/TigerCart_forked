@@ -305,6 +305,7 @@ def place_order():
     return redirect(url_for("home"))
 
 
+# Delivery management routes
 @app.route("/deliver")
 def deliver():
     """Displays all deliveries available for claiming."""
@@ -361,12 +362,49 @@ def decline_delivery(delivery_id):
     return "Error declining delivery", response.status_code
 
 
+# Timeline and checklist routes
+@app.route("/update_checklist", methods=["POST"])
+def update_checklist():
+    """Updates the checklist for items and timeline steps in the delivery."""
+    data = request.json
+    order_id = data.get("order_id")
+    item_type = data.get("type")  # 'item' or 'timeline'
+    item_id = data.get("id")
+    checked = data.get("checked")
+
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+    order = cursor.execute(
+        "SELECT timeline FROM orders WHERE id = ?", (order_id,)
+    ).fetchone()
+
+    if not order:
+        conn.close()
+        return (
+            jsonify({"success": False, "error": "Order not found"}),
+            404,
+        )
+
+    timeline = json.loads(order["timeline"])
+    if item_type == "item":
+        timeline["items"][item_id] = checked
+    else:
+        timeline[item_id] = checked
+
+    cursor.execute(
+        "UPDATE orders SET timeline = ? WHERE id = ?",
+        (json.dumps(timeline), order_id),
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+
 @app.route("/delivery_timeline/<delivery_id>")
 def delivery_timeline(delivery_id):
     """Displays a timeline for the accepted delivery."""
     response = requests.get(
-        f"{SERVER_URL}/delivery/{delivery_id}",
-        timeout=REQUEST_TIMEOUT,
+        f"{SERVER_URL}/delivery/{delivery_id}", timeout=REQUEST_TIMEOUT
     )
     if response.status_code == 200:
         delivery = response.json()
@@ -378,19 +416,35 @@ def delivery_timeline(delivery_id):
     return "Delivery not found", 404
 
 
-@app.route("/shopper_timeline", methods=["GET"])
-def shopper_timeline():
-    """Displays a timeline for the shopper for their delivery"""
-    response = requests.get(
-        f"{SERVER_URL}/get_shopper_timeline",
-        timeout=REQUEST_TIMEOUT,
-    )
-    if response.status_code == 200:
-        timeline_data = response.json()
-        return render_template(
-            "shopper_timeline.html", timeline=timeline_data
+# Profile and favorites management
+@app.route("/profile")
+def profile():
+    """Displays the user's profile, order history, and statistics."""
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    user_data = get_user_data(user_id)
+    orders = get_user_orders(user_id)
+    stats = calculate_user_stats(orders)
+
+    orders_with_totals = []
+    for order in orders:
+        cart = json.loads(order["cart"])
+        subtotal = sum(
+            details.get("quantity", 0) * details.get("price", 0)
+            for item_id, details in cart.items()
         )
-    return "Order not found", 404
+        order_data = dict(order)
+        order_data["total"] = round(subtotal, 2)
+        orders_with_totals.append(order_data)
+
+    return render_template(
+        "profile.html",
+        user=user_data,
+        orders=orders_with_totals,
+        stats=stats,
+    )
 
 
 @app.route("/add_favorite/<item_id>", methods=["POST"])
@@ -421,7 +475,7 @@ def remove_favorite(item_id):
     return jsonify({"success": True})
 
 
-# Helper function to fetch user data
+# Helper functions
 def get_user_data(user_id):
     """Fetches user data from the database."""
     conn = get_user_db_connection()
@@ -433,7 +487,6 @@ def get_user_data(user_id):
     return user
 
 
-# Helper function to fetch all orders of the user
 def get_user_orders(user_id):
     """Fetches all orders made by the user."""
     conn = get_main_db_connection()
@@ -446,7 +499,6 @@ def get_user_orders(user_id):
     return orders
 
 
-# Helper function to calculate user statistics based on orders
 def calculate_user_stats(orders):
     """Calculates statistics based on the user's orders."""
     total_spent = 0
@@ -466,40 +518,6 @@ def calculate_user_stats(orders):
         "total_items": total_items,
     }
     return stats
-
-
-# Profile route
-@app.route("/profile")
-def profile():
-    """Displays the user's profile, order history, and statistics."""
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    user_id = session["user_id"]
-
-    # Fetch user data and orders
-    user_data = get_user_data(user_id)
-    orders = get_user_orders(user_id)
-    stats = calculate_user_stats(orders)
-
-    # Calculate order totals and prepare data for template
-    orders_with_totals = []
-    for order in orders:
-        cart = json.loads(order["cart"])
-        subtotal = sum(
-            details.get("quantity", 0) * details.get("price", 0)
-            for item_id, details in cart.items()
-        )
-        order_data = dict(order)
-        order_data["total"] = round(subtotal, 2)
-        orders_with_totals.append(order_data)
-
-    return render_template(
-        "profile.html",
-        user=user_data,
-        orders=orders_with_totals,
-        stats=stats,
-    )
 
 
 if __name__ == "__main__":
