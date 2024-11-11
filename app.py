@@ -33,34 +33,7 @@ DELIVERY_FEE_PERCENTAGE = 0.1
 def home():
     """Redirects to login if the user is not logged in, else shows home page."""
     auth.authenticate()
-    if "user_id" not in session:
-        return redirect(url_for("login"))
     return render_template("home.html")
-
-
-# Login route
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    """Login page to authenticate the user."""
-    if request.method == "POST":
-        user_id = request.form.get("user_id")
-        session["user_id"] = user_id
-        user = (
-            get_user_db_connection()
-            .execute(
-                "SELECT name FROM users WHERE user_id = ?", (user_id,)
-            )
-            .fetchone()
-        )
-        session["user_name"] = user["name"] if user else "Guest"
-        return redirect(url_for("home"))
-
-    users = (
-        get_user_db_connection()
-        .execute("SELECT * FROM users")
-        .fetchall()
-    )
-    return render_template("login.html", users=users)
 
 
 # Logout route

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+''' auth.py Authors: See below'''
 
 #-----------------------------------------------------------------------
 # auth.py
@@ -22,6 +23,7 @@ _CAS_URL = 'https://fed.princeton.edu/cas/'
 # added by the CAS server.
 
 def strip_ticket(url):
+    ''' see above for fxn definition'''
     if url is None:
         return "something is badly wrong"
     url = re.sub(r'ticket=[^&]*&?', '', url)
@@ -34,6 +36,7 @@ def strip_ticket(url):
 # valid, return the user's username; otherwise, return None.
 
 def validate(ticket):
+    ''' see above for fxn definition'''
     val_url = (_CAS_URL + "validate" + '?service='
         + urllib.parse.quote(strip_ticket(flask.request.url))
         + '&ticket=' + urllib.parse.quote(ticket))
@@ -54,7 +57,7 @@ def validate(ticket):
 # Do not return unless the user is successfully authenticated.
 
 def authenticate():
-
+    ''' see above for fxn definition'''
     # If the username is in the session, then the user was
     # authenticated previously.  So return the username.
     if 'username' in flask.session:
@@ -86,7 +89,7 @@ def authenticate():
 
 @app.route('/logoutapp', methods=['GET'])
 def logoutapp():
-
+    ''' log out of the application'''
     # Log out of the application.
     flask.session.clear()
     html_code = flask.render_template('loggedout.html')
@@ -97,7 +100,7 @@ def logoutapp():
 
 @app.route('/logoutcas', methods=['GET'])
 def logoutcas():
-
+    ''' logout of cas '''
     # Log out of the CAS session, and then the application.
     logout_url = (_CAS_URL + 'logout?service='
         + urllib.parse.quote(
