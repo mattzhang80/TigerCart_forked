@@ -18,6 +18,7 @@ from flask import (
 )
 from config import get_debug_mode, SECRET_KEY
 from database import get_main_db_connection, get_user_db_connection
+import auth
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -31,6 +32,7 @@ DELIVERY_FEE_PERCENTAGE = 0.1
 @app.route("/")
 def home():
     """Redirects to login if the user is not logged in, else shows home page."""
+    auth.authenticate()
     if "user_id" not in session:
         return redirect(url_for("login"))
     return render_template("home.html")
