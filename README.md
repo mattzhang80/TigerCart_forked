@@ -21,11 +21,10 @@
 - [X] Real orders, not placeholders
 - [X] Database of items
 - [ ] Real items, not placeholders
-- [X] Database of users
-- [ ] Real users, not placeholders
-- [ ] More style
 - [ ] Live U-Store data
-- [ ] Princeton CAS Authentication (CAS first, then maybe google)
+- [X] Database of users
+- [ ] Real users, not placeholders (use netID from CAS)
+- [X] Princeton CAS Authentication
 - [X] Edge cases (if item not found)
 - [ ] Settings page
 - [ ] Mobile-first category ribbon with population
@@ -38,4 +37,4 @@
 - Almost MVP
 - Everything deployed
 - Working end-to-end
-- Timeline
+- Timeline!!!!!
