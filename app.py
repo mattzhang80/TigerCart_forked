@@ -29,53 +29,17 @@ DELIVERY_FEE_PERCENTAGE = 0.1
 
 
 # Root route
-@app.route("/")
+@app.route('/', methods=['GET'])
+@app.route('/index', methods=['GET'])
 def home():
     """Redirects to login if the user is not logged in, else shows home page."""
-    auth.authenticate()
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-    return render_template("home.html")
-
-
-# Login route
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    """Login page to authenticate the user."""
-    if request.method == "POST":
-        user_id = request.form.get("user_id")
-        session["user_id"] = user_id
-        user = (
-            get_user_db_connection()
-            .execute(
-                "SELECT name FROM users WHERE user_id = ?", (user_id,)
-            )
-            .fetchone()
-        )
-        session["user_name"] = user["name"] if user else "Guest"
-        return redirect(url_for("home"))
-
-    users = (
-        get_user_db_connection()
-        .execute("SELECT * FROM users")
-        .fetchall()
-    )
-    return render_template("login.html", users=users)
-
-
-# Logout route
-@app.route("/logout", methods=["POST"])
-def logout():
-    """Logs the user out and clears the session."""
-    session.clear()
-    return redirect(url_for("login"))
+    username = auth.authenticate()
+    return render_template("home.html", username=username)
 
 
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
     """Settings page where user can update their Venmo handle."""
-    if "user_id" not in session:
-        return redirect(url_for("login"))
     user_id = session["user_id"]
     conn = get_user_db_connection()
     cursor = conn.cursor()

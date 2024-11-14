@@ -242,7 +242,7 @@
 
     <!-- Top-right logo and profile menu with user's name -->
     <div class="top-right">
-        <div class="user-name">{{ session.get("user_name", "Guest") }}</div>
+        <div class="user-name">{{ username }}</div>
         <div class="profile" onclick="toggleDropdown()">
             <i class="fas fa-user-circle profile-icon"></i>
             <div class="dropdown">
@@ -275,10 +275,10 @@
         }
 
         function logoutUser() {
-            fetch('/logout', { method: 'POST' })
+            fetch('/index', { method: 'GET' })
                 .then(response => {
                     if (response.ok) {
-                        window.location.href = "{{ url_for('login') }}";
+                        window.location.href = "{{ url_for('home') }}";
                     }
                 });
         }
