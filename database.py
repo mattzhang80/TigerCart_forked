@@ -6,8 +6,11 @@ Populates tigercart.sqlite3 and users.sqlite3
 
 import sqlite3
 
-MAIN_DATABASE = "tigercart.sqlite3"
-USER_DATABASE = "users.sqlite3"
+import os
+
+MAIN_DATABASE = os.path.join(os.path.dirname(__file__), "tigercart.sqlite3")
+USER_DATABASE = os.path.join(os.path.dirname(__file__), "users.sqlite3")
+
 
 
 def get_main_db_connection():

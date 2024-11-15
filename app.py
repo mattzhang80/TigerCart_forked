@@ -3,7 +3,7 @@
 app.py
 Authors: TigerCart team
 """
-
+import os
 import json
 import requests
 from flask import (
@@ -781,5 +781,5 @@ def order_details(order_id):
 
 
 if __name__ == "__main__":
-    init_user_db()
-    app.run(port=8000, debug=get_debug_mode())
+    port = int(os.environ.get("PORT", 8000))  # Render assigns a dynamic port
+    app.run(host="0.0.0.0", port=port)        # Listen on all IPs for deployment

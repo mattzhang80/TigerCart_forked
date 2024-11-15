@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: tigercart
+    env: python
+    region: oregon  # Choose a region close to your users
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        value: "your_secret_key"
