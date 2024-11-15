@@ -548,6 +548,7 @@ def update_checklist():
 
     # Enforce sequential steps
     steps = [
+        "Shopper Venmo Recieved",
         "Shopping in U-Store",
         "Checked Out",
         "On Delivery",
