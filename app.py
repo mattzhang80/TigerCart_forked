@@ -366,6 +366,8 @@ def place_order():
     cursor = conn.cursor()
     # Initialize the timeline
     timeline = {
+        "Order Accepted": False,
+        "Venmo Payment Recieved": False,
         "Shopping in U-Store": False,
         "Checked Out": False,
         "On Delivery": False,
@@ -548,6 +550,7 @@ def update_checklist():
 
     # Enforce sequential steps
     steps = [
+        "Order Accepted",
         "Venmo Payment Recieved",
         "Shopping in U-Store",
         "Checked Out",
