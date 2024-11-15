@@ -70,14 +70,34 @@ def settings():
 
 @app.route("/shop")
 def shop():
-    """Displays items available in the shop."""
+    """Displays items available in the shop and current order if any."""
     response = requests.get(
         f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT
     )
     sample_items = response.json()
-    return render_template("shop.html", items=sample_items)
 
-# app.py
+    # Check if the user is logged in
+    user_id = session.get('user_id')
+    current_order = None
+
+    if user_id:
+        conn = get_main_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch the user's current order (status 'placed' or 'claimed')
+        cursor.execute(
+            "SELECT * FROM orders WHERE user_id = ? AND status IN ('placed', 'claimed') ORDER BY timestamp DESC LIMIT 1",
+            (user_id,)
+        )
+        current_order = cursor.fetchone()
+        conn.close()
+    else:
+        # If not logged in, redirect to login or home page
+        return redirect(url_for('auth.login'))
+
+    return render_template("shop.html", items=sample_items, current_order=current_order)
+
+
 
 @app.route("/shopper_timeline")
 def shopper_timeline():
@@ -240,8 +260,6 @@ def update_cart(item_id, action):
             )
     return jsonify({"success": True})
 
-# app.py
-
 @app.route("/order_status/<int:order_id>")
 def order_status(order_id):
     """Returns the timeline status of an order in JSON format."""
@@ -258,7 +276,6 @@ def order_status(order_id):
 
     timeline = json.loads(order["timeline"])
     return jsonify({"timeline": timeline})
-
 
 @app.route("/order_confirmation")
 def order_confirmation():
@@ -341,21 +358,48 @@ def place_order():
     return jsonify({"success": True}), 200
 
 
-# Delivery management routes
 @app.route("/deliver")
 def deliver():
-    """Displays all deliveries available for claiming."""
-    deliverer_id = session.get("user_id")
-    response = requests.get(
-        f"{SERVER_URL}/deliveries",
-        json={"user_id": deliverer_id},
-        timeout=REQUEST_TIMEOUT,
-    )
-    deliveries = response.json()
-    return render_template(
-        "deliver.html", deliveries=deliveries.values()
-    )
+    """Displays available deliveries for deliverers."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for('home'))
 
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+
+    # Fetch available deliveries (status 'placed')
+    cursor.execute(
+        "SELECT * FROM orders WHERE status = 'placed'"
+    )
+    available_deliveries = cursor.fetchall()
+
+    # Fetch deliverer's own deliveries (status 'claimed' and claimed_by = user_id)
+    cursor.execute(
+        "SELECT * FROM orders WHERE status = 'claimed' AND claimed_by = ?",
+        (user_id,)
+    )
+    my_deliveries = cursor.fetchall()
+
+    # Convert SQLite Row objects to dictionaries and calculate earnings
+    available_deliveries = [dict(delivery) for delivery in available_deliveries]
+    my_deliveries = [dict(delivery) for delivery in my_deliveries]
+
+    for delivery in available_deliveries + my_deliveries:
+        # Calculate earnings
+        cart = json.loads(delivery['cart'])
+        subtotal = sum(
+            item['quantity'] * item['price'] for item in cart.values()
+        )
+        delivery['earnings'] = round(subtotal * DELIVERY_FEE_PERCENTAGE, 2)
+
+    conn.close()
+
+    return render_template(
+        'deliver.html',
+        available_deliveries=available_deliveries,
+        my_deliveries=my_deliveries
+    )
 
 @app.route("/delivery/<delivery_id>")
 def delivery_details(delivery_id):
@@ -406,42 +450,69 @@ def decline_delivery(delivery_id):
     return "Error declining delivery", response.status_code
 
 
-# Timeline and checklist routes
-@app.route("/update_checklist", methods=["POST"])
+@app.route('/update_checklist', methods=['POST'])
 def update_checklist():
-    """Updates the checklist for items and timeline steps in the delivery."""
-    data = request.json
-    order_id = data.get("order_id")
-    item_type = data.get("type")  # 'item' or 'timeline'
-    item_id = data.get("id")
-    checked = data.get("checked")
+    """Updates the order's timeline based on deliverer's actions."""
+    data = request.get_json()
+    order_id = data.get('order_id')
+    step = data.get('step')
+    checked = data.get('checked')
+
+    # Ensure that the deliverer is authorized to update this order
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'error': 'User not logged in'}), 401
 
     conn = get_main_db_connection()
     cursor = conn.cursor()
-    order = cursor.execute(
-        "SELECT timeline FROM orders WHERE id = ?", (order_id,)
-    ).fetchone()
-
+    
+    # Retrieve the order
+    cursor.execute(
+        "SELECT timeline, claimed_by FROM orders WHERE id = ?",
+        (order_id,)
+    )
+    order = cursor.fetchone()
+    
     if not order:
         conn.close()
-        return (
-            jsonify({"success": False, "error": "Order not found"}),
-            404,
-        )
-
-    timeline = json.loads(order["timeline"])
-    if item_type == "item":
-        timeline["items"][item_id] = checked
+        return jsonify({'success': False, 'error': 'Order not found'}), 404
+    
+    if order['claimed_by'] != user_id:
+        conn.close()
+        return jsonify({'success': False, 'error': 'Not authorized to update this order'}), 403
+    
+    # Load the existing timeline
+    timeline = json.loads(order['timeline'])
+    
+    # Enforce sequential steps
+    steps = ['Shopping in U-Store', 'Checked Out', 'On Delivery', 'Delivered']
+    step_index = steps.index(step)
+    
+    # Check if previous steps are completed
+    if checked:
+        if step_index > 0:
+            previous_step = steps[step_index - 1]
+            if not timeline.get(previous_step, False):
+                conn.close()
+                return jsonify({'success': False, 'error': f'Previous step "{previous_step}" must be completed first.'}), 400
     else:
-        timeline[item_id] = checked
+        # Prevent unchecking a step if subsequent steps are completed
+        if any(timeline.get(steps[i], False) for i in range(step_index + 1, len(steps))):
+            conn.close()
+            return jsonify({'success': False, 'error': 'Cannot uncheck this step because subsequent steps are completed.'}), 400
 
+    # Update the timeline
+    timeline[step] = checked
+    
+    # Update the database
     cursor.execute(
         "UPDATE orders SET timeline = ? WHERE id = ?",
-        (json.dumps(timeline), order_id),
+        (json.dumps(timeline), order_id)
     )
     conn.commit()
     conn.close()
-    return jsonify({"success": True})
+    
+    return jsonify({'success': True}), 200
 
 # Profile and favorites management
 @app.route("/profile")

@@ -149,3 +149,4 @@ def logoutcas():
     logout_url = _CAS_URL + "logout"
     return redirect(logout_url)
 
+

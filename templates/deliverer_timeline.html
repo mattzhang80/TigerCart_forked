@@ -41,8 +41,13 @@
 <div class="timeline">
     {% set steps = ['Shopping in U-Store', 'Checked Out', 'On Delivery', 'Delivered'] %}
     {% for step in steps %}
+    {% set step_index = loop.index0 %}
+    {% set previous_step_completed = step_index == 0 or order['timeline'].get(steps[step_index - 1], False) %}
     <div class="step" id="{{ step|lower|replace(' ', '-') }}-step">
-        <input type="checkbox" onclick="updateChecklist('timeline', '{{ step|lower|replace(' ', '_') }}', this.checked)"
+        <input type="checkbox"
+               data-step="{{ step }}"
+               onclick="updateChecklist('{{ step }}', this.checked)" 
+               {% if not previous_step_completed %}disabled{% endif %}
                {% if order['timeline'].get(step, False) %}checked{% endif %}>
         <span class="step-text">{{ step }}</span>
     </div>
@@ -50,7 +55,7 @@
 </div>
 
 <script>
-    function updateChecklist(type, id, checked) {
+    function updateChecklist(step, checked) {
         fetch('/update_checklist', {
             method: 'POST',
             headers: {
@@ -58,16 +63,26 @@
             },
             body: JSON.stringify({
                 order_id: "{{ order['id'] }}",
-                type: type,
-                id: id,
+                step: step,
                 checked: checked
             })
         }).then(response => response.json())
           .then(data => {
               if (!data.success) {
-                  alert("Failed to update the checklist.");
+                  alert(data.error || "Failed to update the checklist.");
+                  // Revert the checkbox state
+                  const checkbox = document.querySelector(`input[data-step="${step}"]`);
+                  if (checkbox) {
+                      checkbox.checked = !checked;
+                  }
+              } else {
+                  // Reload the page to update the disabled state of checkboxes
+                  location.reload();
               }
-          }).catch(error => console.error("Error updating checklist:", error));
+          }).catch(error => {
+              console.error("Error updating checklist:", error);
+              alert("An error occurred while updating the checklist.");
+          });
     }
 </script>
 {% endblock %}
