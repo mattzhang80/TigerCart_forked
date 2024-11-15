@@ -606,6 +606,7 @@ def update_checklist():
 @app.route("/profile")
 def profile():
     """Displays the user's profile, order history, and statistics."""
+    username = auth.authenticate()
     if "user_id" not in session:
         return redirect(url_for("login"))
 
@@ -630,6 +631,7 @@ def profile():
         user=user_data,
         orders=orders_with_totals,
         stats=stats,
+        username=username,
     )
 
 
