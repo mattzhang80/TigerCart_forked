@@ -482,7 +482,7 @@ def accept_delivery(delivery_id):
 
     # Redirect to the delivery timeline
     return redirect(
-        url_for("delivery_timeline", delivery_id=delivery_id)
+        url_for("delivery_timeline", delivery_id=delivery_id, username=username)
     )
 
 
@@ -711,6 +711,7 @@ def calculate_user_stats(orders):
 @app.route("/delivery_timeline/<int:delivery_id>")
 def delivery_timeline(delivery_id):
     """Displays the delivery timeline for a specific delivery."""
+    username = auth.authenticate()
     user_id = session.get("user_id")
     if not user_id:
         return redirect(url_for("login"))
@@ -751,6 +752,7 @@ def delivery_timeline(delivery_id):
         "deliverer_timeline.html",
         order=order,
         shopper_venmo=shopper_venmo,
+        username=username,
     )
 
 
