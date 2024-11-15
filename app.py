@@ -17,7 +17,7 @@ from flask import (
     flash,
 )
 from config import get_debug_mode, SECRET_KEY
-from database import get_main_db_connection, get_user_db_connection
+from database import get_main_db_connection, get_user_db_connection, init_user_db
 import auth
 
 # Import and register the auth Blueprint
@@ -115,6 +115,22 @@ def shopper_timeline():
         (user_id,)
     )
     order = cursor.fetchone()
+
+    # Get the deliverer's Venmo handle from the database
+    deliverer_venmo = None
+    if order and order['claimed_by']:
+        
+        user_conn = get_user_db_connection()
+        user_cursor = user_conn.cursor()
+        user_cursor.execute(
+            "SELECT venmo_handle FROM users WHERE user_id = ?",
+            (order['claimed_by'],)
+        )
+        deliverer = user_cursor.fetchone()
+        if deliverer:
+            deliverer_venmo = deliverer['venmo_handle']
+        user_conn.close()
+
     conn.close()
 
     if not order:
@@ -125,7 +141,11 @@ def shopper_timeline():
     order_dict['timeline'] = json.loads(order_dict.get('timeline', '{}'))
     order_dict['cart'] = json.loads(order_dict.get('cart', '{}'))
 
-    return render_template("shopper_timeline.html", order=order_dict)
+    return render_template(
+        "shopper_timeline.html", 
+        order=order_dict,
+        deliverer_venmo=deliverer_venmo
+    )
 
 
 
@@ -634,6 +654,22 @@ def delivery_timeline(delivery_id):
         (delivery_id,)
     )
     order_row = cursor.fetchone()
+
+    # Get the shopper's Venmo handle from the database
+    shopper_venmo = None
+    if order_row:
+        # Use user database connection here
+        user_conn = get_user_db_connection()
+        user_cursor = user_conn.cursor()
+        user_cursor.execute(
+            "SELECT venmo_handle FROM users WHERE user_id = ?",
+            (order_row['user_id'],)
+        )
+        shopper = user_cursor.fetchone()
+        if shopper:
+            shopper_venmo = shopper['venmo_handle']
+        user_conn.close()
+
     conn.close()
 
     if not order_row:
@@ -646,8 +682,37 @@ def delivery_timeline(delivery_id):
 
     return render_template(
         'deliverer_timeline.html',
+        order=order, 
+        shopper_venmo=shopper_venmo
+    )
+
+@app.route('/order_details/<int:order_id>')
+def order_details(order_id):
+    """Displays details of a specific order."""
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+
+    # Retrieve the order from the database
+    cursor.execute(
+        "SELECT * FROM orders WHERE id = ?",
+        (order_id,)
+    )
+    order_row = cursor.fetchone()
+    conn.close()
+
+    if not order_row:
+        return "Order not found.", 404
+
+    # Convert the order row to a dictionary
+    order = dict(order_row)
+    order['cart'] = json.loads(order.get('cart', '{}'))
+
+    return render_template(
+        'order_details.html',
         order=order
     )
 
+
 if __name__ == "__main__":
+    init_user_db()
     app.run(port=8000, debug=get_debug_mode())
