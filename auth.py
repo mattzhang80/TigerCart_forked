@@ -10,13 +10,13 @@ import urllib.request
 import urllib.parse
 import re
 import flask
-
+import ssl
 from top import app
 
 # -----------------------------------------------------------------------
 
 _CAS_URL = "https://fed.princeton.edu/cas/"
-
+context = ssl._create_unverified_context()
 # -----------------------------------------------------------------------
 
 # Return url after stripping out the "ticket" parameter that was
@@ -49,7 +49,7 @@ def validate(ticket):
         + urllib.parse.quote(ticket)
     )
     lines = []
-    with urllib.request.urlopen(val_url) as flo:
+    with urllib.request.urlopen(val_url, context=context) as flo:
         lines = flo.readlines()  # Should return 2 lines.
     if len(lines) != 2:
         return None
