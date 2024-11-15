@@ -20,8 +20,14 @@ from config import get_debug_mode, SECRET_KEY
 from database import get_main_db_connection, get_user_db_connection
 import auth
 
+# Import and register the auth Blueprint
+from auth import auth_bp
+
+
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+app.register_blueprint(auth_bp)
+
 
 SERVER_URL = "http://localhost:5150"
 REQUEST_TIMEOUT = 5
