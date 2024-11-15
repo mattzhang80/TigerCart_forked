@@ -44,11 +44,12 @@ DELIVERY_FEE_PERCENTAGE = 0.1
 def home():
     """Redirects to login if the user is not logged in, else shows home page."""
     username = auth.authenticate()
-    return render_template("home.html", username=username)
+    return render_template("home.html", username=username,)
 
 
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
+    username = auth.authenticate()
     """Settings page where user can update their Venmo handle."""
     user_id = session["user_id"]
     conn = get_user_db_connection()
@@ -69,12 +70,14 @@ def settings():
     return render_template(
         "settings.html",
         venmo_handle=user["venmo_handle"] if user else "",
+        username=username,
     )
 
 
 @app.route("/shop")
 def shop():
     """Displays items available in the shop and current order if any."""
+    username = auth.authenticate()
     response = requests.get(
         f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT
     )
@@ -100,13 +103,15 @@ def shop():
         return redirect(url_for("auth.login"))
 
     return render_template(
-        "shop.html", items=sample_items, current_order=current_order
+        "shop.html", items=sample_items, current_order=current_order,
+        username=username,
     )
 
 
 @app.route("/shopper_timeline")
 def shopper_timeline():
     """Displays the shopper's order timeline."""
+    username = auth.authenticate()
     user_id = session.get("user_id")
     if not user_id:
         return redirect(url_for("home"))
@@ -152,12 +157,14 @@ def shopper_timeline():
         "shopper_timeline.html",
         order=order_dict,
         deliverer_venmo=deliverer_venmo,
+        username=username,
     )
 
 
 @app.route("/category_view/<category>")
 def category_view(category):
     """Displays items in a specific category."""
+    username = auth.authenticate()
     response = requests.get(
         f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT
     )
@@ -168,13 +175,15 @@ def category_view(category):
         if v.get("category") == category
     }
     return render_template(
-        "category_view.html", category=category, items=items_in_category
+        "category_view.html", category=category, items=items_in_category,
+        username=username,
     )
 
 
 @app.route("/cart_view")
 def cart_view():
     """Displays the cart view with item subtotals and total cost."""
+    username = auth.authenticate()
     if "user_id" not in session:
         # Redirect to login or home page if user_id is not in session
         return redirect(url_for("home"))
@@ -208,6 +217,7 @@ def cart_view():
         subtotal=subtotal,
         delivery_fee=delivery_fee,
         total=total,
+        username=username,
     )
 
 
@@ -307,6 +317,7 @@ def order_status(order_id):
 @app.route("/order_confirmation")
 def order_confirmation():
     """Displays the order confirmation page with items in cart."""
+    username = auth.authenticate()
     response = requests.get(
         f"{SERVER_URL}/cart",
         json={"user_id": session["user_id"]},
@@ -314,7 +325,8 @@ def order_confirmation():
     )
     items_in_cart = len(response.json())
     return render_template(
-        "order_confirmation.html", items_in_cart=items_in_cart
+        "order_confirmation.html", items_in_cart=items_in_cart,
+        username=username,
     )
 
 
@@ -388,6 +400,7 @@ def place_order():
 @app.route("/deliver")
 def deliver():
     """Displays available deliveries for deliverers."""
+    username = auth.authenticate()
     user_id = session.get("user_id")
     if not user_id:
         return redirect(url_for("home"))
@@ -428,19 +441,22 @@ def deliver():
         "deliver.html",
         available_deliveries=available_deliveries,
         my_deliveries=my_deliveries,
+        username=username,
     )
 
 
 @app.route("/delivery/<delivery_id>")
 def delivery_details(delivery_id):
     """Displays details of a specific delivery."""
+    username = auth.authenticate()
     response = requests.get(
         f"{SERVER_URL}/delivery/{delivery_id}", timeout=REQUEST_TIMEOUT
     )
     if response.status_code == 200:
         delivery = response.json()
         return render_template(
-            "delivery_details.html", delivery=delivery
+            "delivery_details.html", delivery=delivery,
+            username=username,
         )
     return "Delivery not found", 404
 
@@ -448,6 +464,7 @@ def delivery_details(delivery_id):
 @app.route("/accept_delivery/<int:delivery_id>", methods=["POST"])
 def accept_delivery(delivery_id):
     """Marks the delivery as accepted by changing its status."""
+    username = auth.authenticate()
     user_id = session.get("user_id")
     if not user_id:
         return redirect(url_for("login"))
