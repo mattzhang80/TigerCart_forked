@@ -17,7 +17,11 @@ from flask import (
     flash,
 )
 from config import get_debug_mode, SECRET_KEY
-from database import get_main_db_connection, get_user_db_connection, init_user_db
+from database import (
+    get_main_db_connection,
+    get_user_db_connection,
+    init_user_db,
+)
 import auth
 
 # Import and register the auth Blueprint
@@ -35,8 +39,8 @@ DELIVERY_FEE_PERCENTAGE = 0.1
 
 
 # Root route
-@app.route('/', methods=['GET'])
-@app.route('/index', methods=['GET'])
+@app.route("/", methods=["GET"])
+@app.route("/index", methods=["GET"])
 def home():
     """Redirects to login if the user is not logged in, else shows home page."""
     username = auth.authenticate()
@@ -77,7 +81,7 @@ def shop():
     sample_items = response.json()
 
     # Check if the user is logged in
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
     current_order = None
 
     if user_id:
@@ -87,16 +91,17 @@ def shop():
         # Fetch the user's current order (status 'placed' or 'claimed')
         cursor.execute(
             "SELECT * FROM orders WHERE user_id = ? AND status IN ('placed', 'claimed') ORDER BY timestamp DESC LIMIT 1",
-            (user_id,)
+            (user_id,),
         )
         current_order = cursor.fetchone()
         conn.close()
     else:
         # If not logged in, redirect to login or home page
-        return redirect(url_for('auth.login'))
+        return redirect(url_for("auth.login"))
 
-    return render_template("shop.html", items=sample_items, current_order=current_order)
-
+    return render_template(
+        "shop.html", items=sample_items, current_order=current_order
+    )
 
 
 @app.route("/shopper_timeline")
@@ -104,7 +109,7 @@ def shopper_timeline():
     """Displays the shopper's order timeline."""
     user_id = session.get("user_id")
     if not user_id:
-        return redirect(url_for('home'))
+        return redirect(url_for("home"))
 
     conn = get_main_db_connection()
     cursor = conn.cursor()
@@ -112,23 +117,23 @@ def shopper_timeline():
     # Retrieve the most recent order for this user
     cursor.execute(
         "SELECT * FROM orders WHERE user_id = ? ORDER BY timestamp DESC LIMIT 1",
-        (user_id,)
+        (user_id,),
     )
     order = cursor.fetchone()
 
     # Get the deliverer's Venmo handle from the database
     deliverer_venmo = None
-    if order and order['claimed_by']:
-        
+    if order and order["claimed_by"]:
+
         user_conn = get_user_db_connection()
         user_cursor = user_conn.cursor()
         user_cursor.execute(
             "SELECT venmo_handle FROM users WHERE user_id = ?",
-            (order['claimed_by'],)
+            (order["claimed_by"],),
         )
         deliverer = user_cursor.fetchone()
         if deliverer:
-            deliverer_venmo = deliverer['venmo_handle']
+            deliverer_venmo = deliverer["venmo_handle"]
         user_conn.close()
 
     conn.close()
@@ -138,15 +143,16 @@ def shopper_timeline():
 
     # Convert SQLite Row object to a dictionary
     order_dict = dict(order)
-    order_dict['timeline'] = json.loads(order_dict.get('timeline', '{}'))
-    order_dict['cart'] = json.loads(order_dict.get('cart', '{}'))
+    order_dict["timeline"] = json.loads(
+        order_dict.get("timeline", "{}")
+    )
+    order_dict["cart"] = json.loads(order_dict.get("cart", "{}"))
 
     return render_template(
-        "shopper_timeline.html", 
+        "shopper_timeline.html",
         order=order_dict,
-        deliverer_venmo=deliverer_venmo
+        deliverer_venmo=deliverer_venmo,
     )
-
 
 
 @app.route("/category_view/<category>")
@@ -169,9 +175,9 @@ def category_view(category):
 @app.route("/cart_view")
 def cart_view():
     """Displays the cart view with item subtotals and total cost."""
-    if 'user_id' not in session:
+    if "user_id" not in session:
         # Redirect to login or home page if user_id is not in session
-        return redirect(url_for('home'))
+        return redirect(url_for("home"))
 
     # Proceed with your existing code
     items_response = requests.get(
@@ -280,14 +286,14 @@ def update_cart(item_id, action):
             )
     return jsonify({"success": True})
 
+
 @app.route("/order_status/<int:order_id>")
 def order_status(order_id):
     """Returns the timeline status of an order in JSON format."""
     conn = get_main_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT timeline FROM orders WHERE id = ?",
-        (order_id,)
+        "SELECT timeline FROM orders WHERE id = ?", (order_id,)
     )
     order = cursor.fetchone()
     conn.close()
@@ -296,6 +302,7 @@ def order_status(order_id):
 
     timeline = json.loads(order["timeline"])
     return jsonify({"timeline": timeline})
+
 
 @app.route("/order_confirmation")
 def order_confirmation():
@@ -350,7 +357,7 @@ def place_order():
         "Shopping in U-Store": False,
         "Checked Out": False,
         "On Delivery": False,
-        "Delivered": False
+        "Delivered": False,
     }
 
     cursor.execute(
@@ -363,7 +370,7 @@ def place_order():
             total_items,
             json.dumps(cart),
             delivery_location,
-            json.dumps(timeline)
+            json.dumps(timeline),
         ),
     )
 
@@ -383,43 +390,46 @@ def deliver():
     """Displays available deliveries for deliverers."""
     user_id = session.get("user_id")
     if not user_id:
-        return redirect(url_for('home'))
+        return redirect(url_for("home"))
 
     conn = get_main_db_connection()
     cursor = conn.cursor()
 
     # Fetch available deliveries (status 'placed')
-    cursor.execute(
-        "SELECT * FROM orders WHERE status = 'placed'"
-    )
+    cursor.execute("SELECT * FROM orders WHERE status = 'placed'")
     available_deliveries = cursor.fetchall()
 
     # Fetch deliverer's own deliveries (status 'claimed' and claimed_by = user_id)
     cursor.execute(
         "SELECT * FROM orders WHERE status = 'claimed' AND claimed_by = ?",
-        (user_id,)
+        (user_id,),
     )
     my_deliveries = cursor.fetchall()
 
     # Convert SQLite Row objects to dictionaries and calculate earnings
-    available_deliveries = [dict(delivery) for delivery in available_deliveries]
+    available_deliveries = [
+        dict(delivery) for delivery in available_deliveries
+    ]
     my_deliveries = [dict(delivery) for delivery in my_deliveries]
 
     for delivery in available_deliveries + my_deliveries:
         # Calculate earnings
-        cart = json.loads(delivery['cart'])
+        cart = json.loads(delivery["cart"])
         subtotal = sum(
-            item['quantity'] * item['price'] for item in cart.values()
+            item["quantity"] * item["price"] for item in cart.values()
         )
-        delivery['earnings'] = round(subtotal * DELIVERY_FEE_PERCENTAGE, 2)
+        delivery["earnings"] = round(
+            subtotal * DELIVERY_FEE_PERCENTAGE, 2
+        )
 
     conn.close()
 
     return render_template(
-        'deliver.html',
+        "deliver.html",
         available_deliveries=available_deliveries,
-        my_deliveries=my_deliveries
+        my_deliveries=my_deliveries,
     )
+
 
 @app.route("/delivery/<delivery_id>")
 def delivery_details(delivery_id):
@@ -440,7 +450,7 @@ def accept_delivery(delivery_id):
     """Marks the delivery as accepted by changing its status."""
     user_id = session.get("user_id")
     if not user_id:
-        return redirect(url_for('login'))
+        return redirect(url_for("login"))
 
     conn = get_main_db_connection()
     cursor = conn.cursor()
@@ -454,8 +464,9 @@ def accept_delivery(delivery_id):
     conn.close()
 
     # Redirect to the delivery timeline
-    return redirect(url_for('delivery_timeline', delivery_id=delivery_id))
-
+    return redirect(
+        url_for("delivery_timeline", delivery_id=delivery_id)
+    )
 
 
 @app.route("/decline_delivery/<delivery_id>", methods=["POST"])
@@ -470,69 +481,108 @@ def decline_delivery(delivery_id):
     return "Error declining delivery", response.status_code
 
 
-@app.route('/update_checklist', methods=['POST'])
+@app.route("/update_checklist", methods=["POST"])
 def update_checklist():
     """Updates the order's timeline based on deliverer's actions."""
     data = request.get_json()
-    order_id = data.get('order_id')
-    step = data.get('step')
-    checked = data.get('checked')
+    order_id = data.get("order_id")
+    step = data.get("step")
+    checked = data.get("checked")
 
     # Ensure that the deliverer is authorized to update this order
-    user_id = session.get('user_id')
+    user_id = session.get("user_id")
     if not user_id:
-        return jsonify({'success': False, 'error': 'User not logged in'}), 401
+        return (
+            jsonify({"success": False, "error": "User not logged in"}),
+            401,
+        )
 
     conn = get_main_db_connection()
     cursor = conn.cursor()
-    
+
     # Retrieve the order
     cursor.execute(
         "SELECT timeline, claimed_by FROM orders WHERE id = ?",
-        (order_id,)
+        (order_id,),
     )
     order = cursor.fetchone()
-    
+
     if not order:
         conn.close()
-        return jsonify({'success': False, 'error': 'Order not found'}), 404
-    
-    if order['claimed_by'] != user_id:
+        return (
+            jsonify({"success": False, "error": "Order not found"}),
+            404,
+        )
+
+    if order["claimed_by"] != user_id:
         conn.close()
-        return jsonify({'success': False, 'error': 'Not authorized to update this order'}), 403
-    
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Not authorized to update this order",
+                }
+            ),
+            403,
+        )
+
     # Load the existing timeline
-    timeline = json.loads(order['timeline'])
-    
+    timeline = json.loads(order["timeline"])
+
     # Enforce sequential steps
-    steps = ['Shopping in U-Store', 'Checked Out', 'On Delivery', 'Delivered']
+    steps = [
+        "Shopping in U-Store",
+        "Checked Out",
+        "On Delivery",
+        "Delivered",
+    ]
     step_index = steps.index(step)
-    
+
     # Check if previous steps are completed
     if checked:
         if step_index > 0:
             previous_step = steps[step_index - 1]
             if not timeline.get(previous_step, False):
                 conn.close()
-                return jsonify({'success': False, 'error': f'Previous step "{previous_step}" must be completed first.'}), 400
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": f'Previous step "{previous_step}" must be completed first.',
+                        }
+                    ),
+                    400,
+                )
     else:
         # Prevent unchecking a step if subsequent steps are completed
-        if any(timeline.get(steps[i], False) for i in range(step_index + 1, len(steps))):
+        if any(
+            timeline.get(steps[i], False)
+            for i in range(step_index + 1, len(steps))
+        ):
             conn.close()
-            return jsonify({'success': False, 'error': 'Cannot uncheck this step because subsequent steps are completed.'}), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Cannot uncheck this step because subsequent steps are completed.",
+                    }
+                ),
+                400,
+            )
 
     # Update the timeline
     timeline[step] = checked
-    
+
     # Update the database
     cursor.execute(
         "UPDATE orders SET timeline = ? WHERE id = ?",
-        (json.dumps(timeline), order_id)
+        (json.dumps(timeline), order_id),
     )
     conn.commit()
     conn.close()
-    
-    return jsonify({'success': True}), 200
+
+    return jsonify({"success": True}), 200
+
 
 # Profile and favorites management
 @app.route("/profile")
@@ -638,21 +688,18 @@ def calculate_user_stats(orders):
     return stats
 
 
-@app.route('/delivery_timeline/<int:delivery_id>')
+@app.route("/delivery_timeline/<int:delivery_id>")
 def delivery_timeline(delivery_id):
     """Displays the delivery timeline for a specific delivery."""
     user_id = session.get("user_id")
     if not user_id:
-        return redirect(url_for('login'))
+        return redirect(url_for("login"))
 
     conn = get_main_db_connection()
     cursor = conn.cursor()
 
     # Retrieve the order from the database
-    cursor.execute(
-        "SELECT * FROM orders WHERE id = ?",
-        (delivery_id,)
-    )
+    cursor.execute("SELECT * FROM orders WHERE id = ?", (delivery_id,))
     order_row = cursor.fetchone()
 
     # Get the shopper's Venmo handle from the database
@@ -663,11 +710,11 @@ def delivery_timeline(delivery_id):
         user_cursor = user_conn.cursor()
         user_cursor.execute(
             "SELECT venmo_handle FROM users WHERE user_id = ?",
-            (order_row['user_id'],)
+            (order_row["user_id"],),
         )
         shopper = user_cursor.fetchone()
         if shopper:
-            shopper_venmo = shopper['venmo_handle']
+            shopper_venmo = shopper["venmo_handle"]
         user_conn.close()
 
     conn.close()
@@ -677,26 +724,24 @@ def delivery_timeline(delivery_id):
 
     # Convert the order row to a dictionary
     order = dict(order_row)
-    order['timeline'] = json.loads(order.get('timeline', '{}'))
-    order['cart'] = json.loads(order.get('cart', '{}'))
+    order["timeline"] = json.loads(order.get("timeline", "{}"))
+    order["cart"] = json.loads(order.get("cart", "{}"))
 
     return render_template(
-        'deliverer_timeline.html',
-        order=order, 
-        shopper_venmo=shopper_venmo
+        "deliverer_timeline.html",
+        order=order,
+        shopper_venmo=shopper_venmo,
     )
 
-@app.route('/order_details/<int:order_id>')
+
+@app.route("/order_details/<int:order_id>")
 def order_details(order_id):
     """Displays details of a specific order."""
     conn = get_main_db_connection()
     cursor = conn.cursor()
 
     # Retrieve the order from the database
-    cursor.execute(
-        "SELECT * FROM orders WHERE id = ?",
-        (order_id,)
-    )
+    cursor.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
     order_row = cursor.fetchone()
     conn.close()
 
@@ -705,12 +750,9 @@ def order_details(order_id):
 
     # Convert the order row to a dictionary
     order = dict(order_row)
-    order['cart'] = json.loads(order.get('cart', '{}'))
+    order["cart"] = json.loads(order.get("cart", "{}"))
 
-    return render_template(
-        'order_details.html',
-        order=order
-    )
+    return render_template("order_details.html", order=order)
 
 
 if __name__ == "__main__":

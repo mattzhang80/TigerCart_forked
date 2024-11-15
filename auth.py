@@ -12,7 +12,14 @@ import re
 import flask
 import ssl
 from top import app
-from flask import Blueprint, session, redirect, render_template, request, abort
+from flask import (
+    Blueprint,
+    session,
+    redirect,
+    render_template,
+    request,
+    abort,
+)
 from database import get_user_db_connection
 import urllib.request
 import urllib.parse
@@ -21,7 +28,7 @@ import ssl
 
 # -----------------------------------------------------------------------
 
-auth_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint("auth", __name__)
 _CAS_URL = "https://fed.princeton.edu/cas/"
 context = ssl._create_unverified_context()
 # -----------------------------------------------------------------------
@@ -110,20 +117,24 @@ def authenticate():
     conn = get_user_db_connection()
     cursor = conn.cursor()
 
-    user = cursor.execute("SELECT user_id FROM users WHERE name = ?", (username,)).fetchone()
+    user = cursor.execute(
+        "SELECT user_id FROM users WHERE name = ?", (username,)
+    ).fetchone()
 
     if user is None:
         # User does not exist, create a new user
-        cursor.execute("INSERT INTO users (name) VALUES (?)", (username,))
+        cursor.execute(
+            "INSERT INTO users (name) VALUES (?)", (username,)
+        )
         conn.commit()
         user_id = cursor.lastrowid
     else:
-        user_id = user['user_id']
+        user_id = user["user_id"]
 
     conn.close()
 
     # Store user_id in the session
-    flask.session['user_id'] = user_id
+    flask.session["user_id"] = user_id
 
     return username
 
@@ -148,5 +159,3 @@ def logoutcas():
     session.clear()
     logout_url = _CAS_URL + "logout"
     return redirect(logout_url)
-
-
