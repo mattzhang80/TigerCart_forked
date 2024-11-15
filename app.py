@@ -371,19 +371,27 @@ def delivery_details(delivery_id):
     return "Delivery not found", 404
 
 
-@app.route("/accept_delivery/<delivery_id>", methods=["POST"])
+@app.route("/accept_delivery/<int:delivery_id>", methods=["POST"])
 def accept_delivery(delivery_id):
-    """Accepts a delivery by forwarding the request to the backend server."""
-    response = requests.post(
-        f"{SERVER_URL}/accept_delivery/{delivery_id}",
-        json={"user_id": session.get("user_id")},
-        timeout=REQUEST_TIMEOUT,
+    """Marks the delivery as accepted by changing its status."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for('login'))
+
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+
+    # Update the order status to 'claimed' and set 'claimed_by' to the current user
+    cursor.execute(
+        "UPDATE orders SET status = 'claimed', claimed_by = ? WHERE id = ?",
+        (user_id, delivery_id),
     )
-    if response.status_code == 200:
-        return redirect(
-            url_for("delivery_timeline", delivery_id=delivery_id)
-        )
-    return "Error accepting delivery", response.status_code
+    conn.commit()
+    conn.close()
+
+    # Redirect to the delivery timeline
+    return redirect(url_for('delivery_timeline', delivery_id=delivery_id))
+
 
 
 @app.route("/decline_delivery/<delivery_id>", methods=["POST"])
@@ -434,23 +442,6 @@ def update_checklist():
     conn.commit()
     conn.close()
     return jsonify({"success": True})
-
-
-@app.route("/delivery_timeline/<delivery_id>")
-def delivery_timeline(delivery_id):
-    """Displays a timeline for the accepted delivery."""
-    response = requests.get(
-        f"{SERVER_URL}/delivery/{delivery_id}", timeout=REQUEST_TIMEOUT
-    )
-    if response.status_code == 200:
-        delivery = response.json()
-        return render_template(
-            "deliverer_timeline.html",
-            delivery=delivery,
-            items=delivery["cart"],
-        )
-    return "Delivery not found", 404
-
 
 # Profile and favorites management
 @app.route("/profile")
@@ -555,6 +546,37 @@ def calculate_user_stats(orders):
     }
     return stats
 
+
+@app.route('/delivery_timeline/<int:delivery_id>')
+def delivery_timeline(delivery_id):
+    """Displays the delivery timeline for a specific delivery."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for('login'))
+
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+
+    # Retrieve the order from the database
+    cursor.execute(
+        "SELECT * FROM orders WHERE id = ?",
+        (delivery_id,)
+    )
+    order_row = cursor.fetchone()
+    conn.close()
+
+    if not order_row:
+        return "Order not found.", 404
+
+    # Convert the order row to a dictionary
+    order = dict(order_row)
+    order['timeline'] = json.loads(order.get('timeline', '{}'))
+    order['cart'] = json.loads(order.get('cart', '{}'))
+
+    return render_template(
+        'deliverer_timeline.html',
+        order=order
+    )
 
 if __name__ == "__main__":
     app.run(port=8000, debug=get_debug_mode())

@@ -1,8 +1,17 @@
+<!-- templates/deliverer_timeline.html -->
+
 {% extends "base.html" %}
 {% block title %}Delivery Timeline{% endblock %}
-
 {% block content %}
-<h1>Delivery Timeline</h1>
+<h1>Delivery Timeline for Order {{ order['id'] }}</h1>
+
+<hr color="#ff5722">
+
+<h2><u>Logistics</u></h2>
+<p><strong>Delivery Location:</strong> {{ order['location'] }}</p>
+<p><strong>Timestamp:</strong> {{ order['timestamp'] }}</p>
+<p><strong>User ID:</strong> {{ order['user_id'] }}</p>
+<p><strong>Total Items:</strong> {{ order['total_items'] }}</p>
 
 <hr color="#ff5722">
 
@@ -13,18 +22,13 @@
             <tr>
                 <td style="border: 1px solid black;"><strong>Item</strong></td>
                 <td style="border: 1px solid black;"><strong>Quantity</strong></td>
-                <td style="border: 1px solid black;"><strong>Collected</strong></td>
             </tr>
         </thead>
         <tbody style="border: 1px solid black;">
-            {% for item_id, item in items.items() %}
+            {% for item_id, item in order['cart'].items() %}
             <tr>
-                <td style="border: 1px solid black;">{{ item.name }}</td>
-                <td style="border: 1px solid black;">{{ item.quantity }}</td>
-                <td style="border: 1px solid black;">
-                    <input type="checkbox" onclick="updateChecklist('item', '{{ item_id }}', this.checked)"
-                           {% if item.checked %}checked{% endif %}>
-                </td>
+                <td style="border: 1px solid black;">{{ item['name'] }}</td>
+                <td style="border: 1px solid black;">{{ item['quantity'] }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -39,7 +43,7 @@
     {% for step in steps %}
     <div class="step" id="{{ step|lower|replace(' ', '-') }}-step">
         <input type="checkbox" onclick="updateChecklist('timeline', '{{ step|lower|replace(' ', '_') }}', this.checked)"
-               {% if step in timeline and timeline[step] %}checked{% endif %}>
+               {% if order['timeline'].get(step, False) %}checked{% endif %}>
         <span class="step-text">{{ step }}</span>
     </div>
     {% endfor %}
@@ -47,13 +51,13 @@
 
 <script>
     function updateChecklist(type, id, checked) {
-        fetch(`/update_checklist`, {
+        fetch('/update_checklist', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                order_id: "{{ order.id }}",
+                order_id: "{{ order['id'] }}",
                 type: type,
                 id: id,
                 checked: checked
