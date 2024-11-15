@@ -77,6 +77,37 @@ def shop():
     sample_items = response.json()
     return render_template("shop.html", items=sample_items)
 
+# app.py
+
+@app.route("/shopper_timeline")
+def shopper_timeline():
+    """Displays the shopper's order timeline."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for('home'))
+
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+
+    # Retrieve the most recent order for this user
+    cursor.execute(
+        "SELECT * FROM orders WHERE user_id = ? ORDER BY timestamp DESC LIMIT 1",
+        (user_id,)
+    )
+    order = cursor.fetchone()
+    conn.close()
+
+    if not order:
+        return "No orders found."
+
+    # Convert SQLite Row object to a dictionary
+    order_dict = dict(order)
+    order_dict['timeline'] = json.loads(order_dict.get('timeline', '{}'))
+    order_dict['cart'] = json.loads(order_dict.get('cart', '{}'))
+
+    return render_template("shopper_timeline.html", order=order_dict)
+
+
 
 @app.route("/category_view/<category>")
 def category_view(category):
@@ -98,6 +129,11 @@ def category_view(category):
 @app.route("/cart_view")
 def cart_view():
     """Displays the cart view with item subtotals and total cost."""
+    if 'user_id' not in session:
+        # Redirect to login or home page if user_id is not in session
+        return redirect(url_for('home'))
+
+    # Proceed with your existing code
     items_response = requests.get(
         f"{SERVER_URL}/items", timeout=REQUEST_TIMEOUT
     )
@@ -204,6 +240,25 @@ def update_cart(item_id, action):
             )
     return jsonify({"success": True})
 
+# app.py
+
+@app.route("/order_status/<int:order_id>")
+def order_status(order_id):
+    """Returns the timeline status of an order in JSON format."""
+    conn = get_main_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT timeline FROM orders WHERE id = ?",
+        (order_id,)
+    )
+    order = cursor.fetchone()
+    conn.close()
+    if not order:
+        return jsonify({"error": "Order not found."}), 404
+
+    timeline = json.loads(order["timeline"])
+    return jsonify({"timeline": timeline})
+
 
 @app.route("/order_confirmation")
 def order_confirmation():
@@ -253,16 +308,25 @@ def place_order():
     total_items = sum(details["quantity"] for details in cart.values())
     conn = get_main_db_connection()
     cursor = conn.cursor()
+    # Initialize the timeline
+    timeline = {
+        "Shopping in U-Store": False,
+        "Checked Out": False,
+        "On Delivery": False,
+        "Delivered": False
+    }
+
     cursor.execute(
         """INSERT INTO orders
-        (status, user_id, total_items, cart, location)
-        VALUES (?, ?, ?, ?, ?)""",
+        (status, user_id, total_items, cart, location, timeline)
+        VALUES (?, ?, ?, ?, ?, ?)""",
         (
             "placed",
             user_id,
             total_items,
             json.dumps(cart),
             delivery_location,
+            json.dumps(timeline)
         ),
     )
 
@@ -274,7 +338,7 @@ def place_order():
     conn.close()
     user_conn.close()
 
-    return redirect(url_for("home"))
+    return jsonify({"success": True}), 200
 
 
 # Delivery management routes
